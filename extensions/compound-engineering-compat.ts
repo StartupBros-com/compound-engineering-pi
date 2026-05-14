@@ -2,9 +2,9 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent"
-import { matchesKey, truncateToWidth, type TUI, visibleWidth, wrapTextWithAnsi } from "@mariozechner/pi-tui"
-import { Type } from "@sinclair/typebox"
+import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent"
+import { matchesKey, truncateToWidth, type TUI, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui"
+import { Type } from "typebox"
 
 const MAX_BYTES = 50 * 1024
 const DEFAULT_SUBAGENT_TIMEOUT_MS = 10 * 60 * 1000
