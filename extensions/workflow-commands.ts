@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent"
+import type { CePlanKind } from "../src/workflow-context.ts"
 import {
   buildCeWorkflowContextSummary,
   loadCeWorkflowContext,
@@ -315,7 +316,7 @@ type TodoDerivedContext = {
   topic?: string
   planPath?: string
   brainstormPath?: string
-  planKind?: string
+  planKind?: CePlanKind
   phaseId?: string
   parentPlanPath?: string
   branch?: string
@@ -325,6 +326,11 @@ type TodoDerivedContext = {
 function pickSingle(values: Array<string | undefined>): string | undefined {
   const unique = [...new Set(values.filter((value): value is string => Boolean(value && value.trim())))]
   return unique.length === 1 ? unique[0] : undefined
+}
+
+function normalizePlanKind(value: string | undefined): CePlanKind | undefined {
+  if (value === "single" || value === "master" || value === "phase" || value === "unknown") return value
+  return undefined
 }
 
 async function deriveResolveTodoContext(cwd: string, args: string | undefined): Promise<TodoDerivedContext | null> {
@@ -363,7 +369,7 @@ async function deriveResolveTodoContext(cwd: string, args: string | undefined): 
     topic: pickSingle(readyTodos.map((todo) => todo.source_topic)),
     planPath: normalizeProjectPath(pickSingle(readyTodos.map((todo) => todo.source_plan))),
     brainstormPath: normalizeProjectPath(pickSingle(readyTodos.map((todo) => todo.source_brainstorm))),
-    planKind: pickSingle(readyTodos.map((todo) => todo.source_plan_kind)),
+    planKind: normalizePlanKind(pickSingle(readyTodos.map((todo) => todo.source_plan_kind))),
     phaseId: pickSingle(readyTodos.map((todo) => todo.source_phase_id)),
     parentPlanPath: normalizeProjectPath(pickSingle(readyTodos.map((todo) => todo.source_parent_plan))),
     branch: pickSingle(readyTodos.map((todo) => todo.source_branch)),

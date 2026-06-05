@@ -22,8 +22,9 @@ describe("package integrity", () => {
     const workflowCommands = await readRepoFile("extensions", "workflow-commands.ts")
     const reviewRuntime = await readRepoFile("extensions", "review-runtime.ts")
 
-    expect(workflowCommands).toContain('"..", "prompts"')
-    expect(reviewRuntime).toContain('"..", "prompts", "workflows-review.md"')
+    expect(workflowCommands).toMatch(/path\.join\(\s*extensionDir,\s*"\.\.",\s*"prompts"\s*\)/)
+    expect(reviewRuntime).toContain('"prompts"')
+    expect(reviewRuntime).toContain('"workflows-review.md"')
     expect(workflowCommands).not.toContain("workflow-prompts")
     expect(reviewRuntime).not.toContain("workflow-prompts")
     expect(reviewRuntime).not.toContain("/home/")

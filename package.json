@@ -1,6 +1,6 @@
 {
   "name": "compound-engineering-pi",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "type": "module",
   "private": false,
   "description": "Pi-first Compound Engineering extension with subagents and MCPorter compatibility.",
@@ -58,6 +58,8 @@
     "release:publish": "npm publish --access public",
     "release:ship": "npm run release:check && npm run release:publish",
     "sync:upstream": "bun run scripts/sync-upstream-pi.ts",
+    "agents:generate": "node scripts/generate-agent-wrappers.mjs",
+    "agents:check": "node scripts/generate-agent-wrappers.mjs --check",
     "prepublishOnly": "bun test"
   },
   "peerDependencies": {
@@ -82,9 +84,9 @@
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.74.0",
-    "@earendil-works/pi-tui": "^0.74.0",
+    "@earendil-works/pi-coding-agent": "^0.75.4",
+    "@earendil-works/pi-tui": "^0.75.4",
     "bun-types": "^1.0.0",
-    "typebox": "^1.1.24"
+    "typebox": "^1.1.38"
   }
 }

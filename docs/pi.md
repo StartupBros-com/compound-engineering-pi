@@ -11,7 +11,7 @@ This guide explains how to use the Compound Engineering plugin in **Pi** with th
 # after npm publish:
 pi install npm:compound-engineering-pi
 # fallback (works now):
-pi install git:github.com/StartupBros/compound-engineering-pi@v0.2.6
+pi install git:github.com/StartupBros/compound-engineering-pi@v0.2.7
 
 # 2) Install MCPorter (for MCP-style tool access in Pi)
 npm i -g mcporter
@@ -97,11 +97,29 @@ Lists tools for an MCP server via MCPorter.
 ### `mcporter_call`
 Calls a specific MCP tool via MCPorter.
 
+### `mcpb_inspect`
+Inspects a `.mcpb` bundle or unpacked MCPB directory without installing or running it. Reports manifest metadata, declared tools, required `user_config`, sensitive config fields, archive safety warnings, and validation errors.
+
+### `mcpb_import`
+Imports a `.mcpb` bundle into a quarantined local install directory and writes a MCPorter server entry.
+
+Defaults:
+- install root: `~/.pi/agent/mcpb/`
+- config target: project-local `.pi/compound-engineering/mcporter.json`
+- no automatic server probe/run after import
+
+Use `dryRun: true` to preview the masked MCPorter entry. Use `target: "global"` to write `~/.pi/agent/compound-engineering/mcporter.json`.
+
+### `mcpb_export`
+Validates or packs an unpacked MCPB directory using the `mcpb` CLI when available. If the CLI is not installed, install `@anthropic-ai/mcpb` or pass `useNpx: true` for a one-off run.
+
 ---
 
-## MCP via MCPorter (instead of native MCP)
+## MCP via MCPorter and MCPB
 
-Pi itself does not include native MCP runtime behavior identical to Claude Code. This target uses MCPorter as the compatibility layer.
+Pi itself does not include native MCP runtime behavior identical to Claude Code. This target uses MCPorter as the runtime compatibility layer.
+
+MCPB (`.mcpb`) support is packaging-oriented: inspect/import/export tools translate local MCP bundles into MCPorter config instead of replacing MCPorter.
 
 Generated config path:
 
@@ -166,6 +184,8 @@ Run:
 ### Subagent calls fail
 Check:
 - target agent exists in `.pi/agents/<name>.md` or `~/.pi/agent/agents/<name>.md`
+- for local dogfooding, run `npm run agents:generate` from this repo and verify with `npm run agents:check`
+- review aliases such as `security-sentinel`, `performance-oracle`, `agent-native-reviewer`, and `learnings-researcher` exist when using the Pi-native review runtime
 - target skill exists in `.pi/skills/<name>/SKILL.md` when using a skill wrapper
 - nested Pi call works: `pi --no-session -p "/skill:<name> ..."`
 - permissions/sandbox rules in your environment

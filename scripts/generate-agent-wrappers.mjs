@@ -6,7 +6,10 @@ import os from "node:os"
 const repoRoot = path.resolve(new URL("..", import.meta.url).pathname)
 const skillsDir = path.join(repoRoot, "skills")
 const packageAgentsDir = path.join(repoRoot, "agents")
-const targetAgentsDir = path.join(os.homedir(), ".pi", "agent", "agents")
+const targetAgentsDir = process.env.CE_PI_AGENT_WRAPPER_DIR
+  ? path.resolve(process.env.CE_PI_AGENT_WRAPPER_DIR)
+  : path.join(os.homedir(), ".pi", "agent", "agents")
+const checkOnly = process.argv.includes("--check")
 
 const HEADER = `# Global Compound Engineering agent wrappers
 
@@ -57,7 +60,9 @@ async function listGeneratedAgentFiles() {
 async function writeFileIfChanged(filePath, content) {
   const existing = await fs.readFile(filePath, "utf8").catch(() => null)
   if (existing === content) return false
-  await fs.writeFile(filePath, content, "utf8")
+  if (!checkOnly) {
+    await fs.writeFile(filePath, content, "utf8")
+  }
   return true
 }
 
@@ -125,6 +130,16 @@ async function main() {
   for (const skillName of skillNames) {
     if (generatedAgentNames.has(skillName)) continue
     changed += Number(await writeFileIfChanged(path.join(targetAgentsDir, `${skillName}.md`), skillWrapperBody(skillName)))
+  }
+
+  if (checkOnly) {
+    if (changed > 0) {
+      console.error(`${changed} wrapper files are stale in ${targetAgentsDir}`)
+      process.exitCode = 1
+    } else {
+      console.log(`Wrapper files are up to date in ${targetAgentsDir}`)
+    }
+    return
   }
 
   console.log(`Generated/updated ${changed} wrapper files in ${targetAgentsDir}`)

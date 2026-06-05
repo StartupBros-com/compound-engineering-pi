@@ -1,10 +1,33 @@
 import fs from "node:fs"
+import { promises as fsp } from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent"
 import { matchesKey, truncateToWidth, type TUI, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui"
 import { Type } from "typebox"
+import {
+  DEFAULT_MCPB_INSTALL_ROOT,
+  assertNoSymlinks,
+  assertSafeZipEntries,
+  buildMcporterServerEntry,
+  defaultInstallDir,
+  defaultServerName,
+  ensurePathInside,
+  maskMcporterEntry,
+  mergeMcporterServer,
+  normalizePathArgument,
+  parseMcpbManifest,
+  readManifestFromDirectory,
+  readMcporterConfig,
+  resolveUserConfig,
+  sha256Directory,
+  sha256File,
+  summarizeMcpbManifest,
+  validateMcpbManifest,
+  writeJsonAtomic,
+  type McpbManifest,
+} from "../src/mcpb.ts"
 
 const MAX_BYTES = 50 * 1024
 const DEFAULT_SUBAGENT_TIMEOUT_MS = 10 * 60 * 1000
@@ -75,6 +98,111 @@ function resolveMcporterConfigPath(cwd: string, explicit?: string): string | und
   if (fs.existsSync(globalPath)) return globalPath
 
   return resolveBundledMcporterConfigPath()
+}
+
+function resolveWritableMcporterConfigPath(cwd: string, target?: string, explicit?: string): string {
+  if (explicit && explicit.trim()) return path.resolve(cwd, explicit)
+
+  if (target === "global") {
+    return path.join(os.homedir(), ".pi", "agent", "compound-engineering", "mcporter.json")
+  }
+
+  if (target === "existing") {
+    const existing = resolveMcporterConfigPath(cwd)
+    if (existing) return existing
+  }
+
+  return path.join(cwd, ".pi", "compound-engineering", "mcporter.json")
+}
+
+async function listMcpbArchiveEntries(pi: ExtensionAPI, archivePath: string, signal?: AbortSignal): Promise<string[]> {
+  const result = await pi.exec("unzip", ["-Z1", archivePath], { signal, timeout: 30_000 })
+  if (result.code !== 0) {
+    throw new Error("Unable to list MCPB archive with unzip: " + truncate(result.stderr || result.stdout || "unknown error"))
+  }
+  return result.stdout.split("\n").map((line) => line.trim()).filter(Boolean)
+}
+
+async function readManifestFromMcpbArchive(pi: ExtensionAPI, archivePath: string, signal?: AbortSignal): Promise<McpbManifest> {
+  const result = await pi.exec("unzip", ["-p", archivePath, "manifest.json"], { signal, timeout: 30_000 })
+  if (result.code !== 0) {
+    throw new Error("Unable to read manifest.json from MCPB archive: " + truncate(result.stderr || result.stdout || "unknown error"))
+  }
+  return parseMcpbManifest(result.stdout)
+}
+
+async function readMcpbSourceManifest(
+  pi: ExtensionAPI,
+  sourcePath: string,
+  signal?: AbortSignal,
+): Promise<{ manifest: McpbManifest; sourceType: "archive" | "directory"; hash: string; zipWarnings: string[] }> {
+  const stat = await fsp.stat(sourcePath)
+  if (stat.isDirectory()) {
+    const manifest = await readManifestFromDirectory(sourcePath)
+    const hash = await sha256Directory(sourcePath)
+    return { manifest, sourceType: "directory", hash, zipWarnings: [] }
+  }
+
+  const entries = await listMcpbArchiveEntries(pi, sourcePath, signal)
+  const safeEntries = assertSafeZipEntries(entries)
+  if (safeEntries.errors.length > 0) {
+    throw new Error("Unsafe MCPB archive:\n- " + safeEntries.errors.join("\n- "))
+  }
+
+  const manifest = await readManifestFromMcpbArchive(pi, sourcePath, signal)
+  const hash = await sha256File(sourcePath)
+  return { manifest, sourceType: "archive", hash, zipWarnings: safeEntries.warnings }
+}
+
+async function installMcpbSource(
+  pi: ExtensionAPI,
+  sourcePath: string,
+  sourceType: "archive" | "directory",
+  installDir: string,
+  installRoot: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  ensurePathInside(installRoot, installDir)
+  await fsp.mkdir(installRoot, { recursive: true })
+
+  let installDirExists = false
+  try {
+    await fsp.access(installDir)
+    installDirExists = true
+  } catch {
+    installDirExists = false
+  }
+
+  if (installDirExists) {
+    await assertNoSymlinks(installDir)
+    return
+  }
+
+  const tempDir = path.join(installRoot, ".tmp-" + path.basename(installDir) + "-" + process.pid + "-" + Date.now())
+  ensurePathInside(installRoot, tempDir)
+  await fsp.rm(tempDir, { recursive: true, force: true })
+  await fsp.mkdir(tempDir, { recursive: true })
+
+  try {
+    if (sourceType === "directory") {
+      await fsp.cp(sourcePath, tempDir, { recursive: true, force: true, errorOnExist: false })
+    } else {
+      const result = await pi.exec("unzip", ["-q", "-o", sourcePath, "-d", tempDir], { signal, timeout: 120_000 })
+      if (result.code !== 0) {
+        throw new Error("Unable to extract MCPB archive: " + truncate(result.stderr || result.stdout || "unknown error"))
+      }
+    }
+
+    await assertNoSymlinks(tempDir)
+    await fsp.rename(tempDir, installDir)
+  } catch (error) {
+    await fsp.rm(tempDir, { recursive: true, force: true })
+    throw error
+  }
+}
+
+function formatJson(value: unknown): string {
+  return JSON.stringify(value, null, 2)
 }
 
 function resolveTaskCwd(baseCwd: string, taskCwd?: string): string {
@@ -746,6 +874,257 @@ export default function (pi: ExtensionAPI) {
           command: "mcporter " + args.join(" "),
           configPath,
         },
+      }
+    },
+  })
+
+  pi.registerTool({
+    name: "mcpb_inspect",
+    label: "MCPB Inspect",
+    description: "Inspect a .mcpb bundle or unpacked MCPB directory without installing or running it.",
+    parameters: Type.Object({
+      path: Type.String({ description: "Path to a .mcpb file or unpacked directory containing manifest.json" }),
+      includeRawManifest: Type.Optional(Type.Boolean({ default: false, description: "Include raw manifest JSON in details" })),
+    }),
+    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+      try {
+        const sourcePath = normalizePathArgument(ctx.cwd, params.path)
+        const { manifest, sourceType, hash, zipWarnings } = await readMcpbSourceManifest(pi, sourcePath, signal)
+        const validation = validateMcpbManifest(manifest)
+        const userConfigFields = Object.entries(manifest.user_config ?? {})
+        const requiredConfig = userConfigFields.filter(([, field]) => field.required).map(([key]) => key)
+        const sensitiveConfig = userConfigFields.filter(([, field]) => field.sensitive).map(([key]) => key)
+        const summary = summarizeMcpbManifest(manifest)
+        const warnings = [...zipWarnings, ...validation.warnings]
+
+        const lines = [
+          "MCPB " + (validation.errors.length > 0 ? "has validation errors" : "looks importable") + ": " + (manifest.display_name || manifest.name || path.basename(sourcePath)),
+          "Source: " + sourcePath + " (" + sourceType + ")",
+          "SHA256: " + hash,
+          "Server: " + (manifest.server?.type || "unknown") + (manifest.server?.entry_point ? " -> " + manifest.server.entry_point : ""),
+          "Declared tools: " + ((manifest.tools ?? []).map((tool) => tool.name).filter(Boolean).join(", ") || (manifest.tools_generated ? "generated at runtime" : "none listed")),
+        ]
+
+        if (requiredConfig.length > 0) lines.push("Required user_config: " + requiredConfig.join(", "))
+        if (sensitiveConfig.length > 0) lines.push("Sensitive user_config: " + sensitiveConfig.join(", "))
+        if (warnings.length > 0) lines.push("Warnings:\n- " + warnings.join("\n- "))
+        if (validation.errors.length > 0) lines.push("Errors:\n- " + validation.errors.join("\n- "))
+        lines.push("Next: use mcpb_import with userConfig values to install into MCPorter config; it will not run the server automatically.")
+
+        return {
+          isError: validation.errors.length > 0,
+          content: [{ type: "text", text: lines.join("\n") }],
+          details: {
+            sourcePath,
+            sourceType,
+            sha256: hash,
+            summary,
+            requiredConfig,
+            sensitiveConfig,
+            warnings,
+            errors: validation.errors,
+            rawManifest: params.includeRawManifest ? manifest : undefined,
+          },
+        }
+      } catch (error) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
+          details: {},
+        }
+      }
+    },
+  })
+
+  pi.registerTool({
+    name: "mcpb_import",
+    label: "MCPB Import",
+    description: "Safely import a .mcpb bundle into a quarantine install directory and write an MCPorter server entry.",
+    parameters: Type.Object({
+      path: Type.String({ description: "Path to a .mcpb file or unpacked directory containing manifest.json" }),
+      serverName: Type.Optional(Type.String({ description: "MCPorter server name. Defaults to the manifest name." })),
+      userConfig: Type.Optional(Type.Record(Type.String(), Type.Any(), { description: "Values for manifest.user_config placeholders" })),
+      target: Type.Optional(Type.String({ description: "Where to write config: project (default), global, existing, or custom" })),
+      configPath: Type.Optional(Type.String({ description: "Explicit MCPorter config path. Required when target=custom." })),
+      installRoot: Type.Optional(Type.String({ description: "Install root for unpacked bundles. Defaults to ~/.pi/agent/mcpb" })),
+      overwrite: Type.Optional(Type.Boolean({ default: false, description: "Overwrite an existing MCPorter server entry with the same name" })),
+      dryRun: Type.Optional(Type.Boolean({ default: false, description: "Show the planned import without writing files" })),
+    }),
+    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+      try {
+        if (params.target === "custom" && !params.configPath) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: "target=custom requires configPath." }],
+            details: {},
+          }
+        }
+
+        const sourcePath = normalizePathArgument(ctx.cwd, params.path)
+        const installRoot = params.installRoot
+          ? normalizePathArgument(ctx.cwd, params.installRoot)
+          : DEFAULT_MCPB_INSTALL_ROOT
+        const { manifest, sourceType, hash, zipWarnings } = await readMcpbSourceManifest(pi, sourcePath, signal)
+        const validation = validateMcpbManifest(manifest)
+        if (validation.errors.length > 0) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: "MCPB manifest is not importable:\n- " + validation.errors.join("\n- ") }],
+            details: { errors: validation.errors, warnings: validation.warnings },
+          }
+        }
+
+        const resolvedConfig = resolveUserConfig(manifest, params.userConfig ?? {})
+        if (resolvedConfig.missingRequired.length > 0) {
+          return {
+            isError: true,
+            content: [{
+              type: "text",
+              text: "Missing required MCPB user_config values: " + resolvedConfig.missingRequired.join(", ") +
+                "\nCall mcpb_import again with userConfig, e.g. {\"" + resolvedConfig.missingRequired[0] + "\": \"...\"}.",
+            }],
+            details: {
+              missingRequired: resolvedConfig.missingRequired,
+              sensitiveKeys: resolvedConfig.sensitiveKeys,
+            },
+          }
+        }
+
+        const serverName = defaultServerName(manifest, params.serverName)
+        const configPath = resolveWritableMcporterConfigPath(ctx.cwd, params.target || "project", params.configPath)
+        const installDir = defaultInstallDir(manifest, hash, installRoot)
+        const build = buildMcporterServerEntry(manifest, installDir, resolvedConfig)
+        const maskedEntry = maskMcporterEntry(build.entry, build.sensitiveEnvKeys, build.sensitiveArgIndices)
+        const warnings = [...zipWarnings, ...validation.warnings, ...resolvedConfig.warnings, ...build.warnings]
+        const currentConfig = await readMcporterConfig(configPath)
+        const merged = mergeMcporterServer(currentConfig, serverName, build.entry, Boolean(params.overwrite))
+
+        if (merged.existed && !params.overwrite) {
+          return {
+            isError: true,
+            content: [{
+              type: "text",
+              text: "MCPorter config already has a server named '" + serverName + "' at " + configPath +
+                ". Re-run with overwrite=true or choose serverName.",
+            }],
+            details: { serverName, configPath, maskedEntry },
+          }
+        }
+
+        if (!params.dryRun) {
+          await installMcpbSource(pi, sourcePath, sourceType, installDir, installRoot, signal)
+          await writeJsonAtomic(configPath, merged.config)
+        }
+
+        const action = params.dryRun ? "Planned MCPB import" : "Imported MCPB"
+        const lines = [
+          action + ": " + (manifest.display_name || manifest.name || serverName),
+          "Server name: " + serverName,
+          "Install dir: " + installDir,
+          "MCPorter config: " + configPath,
+          "Server entry (masked):\n" + formatJson(maskedEntry),
+        ]
+        if (warnings.length > 0) lines.push("Warnings:\n- " + warnings.join("\n- "))
+        lines.push("Next: verify without auto-running during import by calling mcporter_list with server='" + serverName + "' and configPath='" + configPath + "'.")
+
+        return {
+          isError: false,
+          content: [{ type: "text", text: lines.join("\n") }],
+          details: {
+            dryRun: Boolean(params.dryRun),
+            serverName,
+            sourcePath,
+            sourceType,
+            installDir,
+            configPath,
+            sha256: hash,
+            warnings,
+            maskedEntry,
+            changed: merged.changed,
+            existed: merged.existed,
+          },
+        }
+      } catch (error) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
+          details: {},
+        }
+      }
+    },
+  })
+
+  pi.registerTool({
+    name: "mcpb_export",
+    label: "MCPB Export",
+    description: "Validate or pack an unpacked MCPB directory using the MCPB CLI when available.",
+    parameters: Type.Object({
+      directory: Type.String({ description: "Directory containing manifest.json and server files" }),
+      output: Type.Optional(Type.String({ description: "Optional output .mcpb path for packing" })),
+      validateOnly: Type.Optional(Type.Boolean({ default: false, description: "Only validate the manifest; do not pack" })),
+      mcpbCommand: Type.Optional(Type.String({ description: "MCPB CLI command to use. Defaults to mcpb from PATH." })),
+      useNpx: Type.Optional(Type.Boolean({ default: false, description: "If mcpb is not installed, run npx -y @anthropic-ai/mcpb. May use network." })),
+    }),
+    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+      try {
+        const directory = normalizePathArgument(ctx.cwd, params.directory)
+        const manifest = await readManifestFromDirectory(directory)
+        const validation = validateMcpbManifest(manifest)
+        if (validation.errors.length > 0) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: "MCPB manifest validation failed:\n- " + validation.errors.join("\n- ") }],
+            details: { errors: validation.errors, warnings: validation.warnings },
+          }
+        }
+
+        const commandProbe = params.mcpbCommand
+          ? { code: 0, stdout: params.mcpbCommand, stderr: "" }
+          : await pi.exec("bash", ["-lc", "command -v mcpb"], { signal, timeout: 10_000 })
+
+        const hasMcpb = commandProbe.code === 0 && commandProbe.stdout.trim()
+        if (!hasMcpb && !params.useNpx) {
+          const text = "MCPB manifest is internally valid, but mcpb CLI is not installed.\n" +
+            "Install it with `npm install -g @anthropic-ai/mcpb`, or re-run mcpb_export with useNpx=true."
+          return {
+            isError: Boolean(!params.validateOnly),
+            content: [{ type: "text", text }],
+            details: { validation, summary: summarizeMcpbManifest(manifest) },
+          }
+        }
+
+        if (params.validateOnly) {
+          const args = hasMcpb
+            ? ["validate", path.join(directory, "manifest.json")]
+            : ["-y", "@anthropic-ai/mcpb", "validate", path.join(directory, "manifest.json")]
+          const command = hasMcpb ? commandProbe.stdout.trim() : "npx"
+          const result = await pi.exec(command, args, { signal, timeout: 120_000 })
+          return {
+            isError: result.code !== 0,
+            content: [{ type: "text", text: truncate(result.stdout || result.stderr || "MCPB validation completed.") }],
+            details: { exitCode: result.code, command: command + " " + args.join(" "), warnings: validation.warnings },
+          }
+        }
+
+        const args = hasMcpb
+          ? ["pack", directory]
+          : ["-y", "@anthropic-ai/mcpb", "pack", directory]
+        if (params.output) args.push(normalizePathArgument(ctx.cwd, params.output))
+        const command = hasMcpb ? commandProbe.stdout.trim() : "npx"
+        const result = await pi.exec(command, args, { signal, timeout: 180_000 })
+        const output = truncate(result.stdout || result.stderr || "")
+
+        return {
+          isError: result.code !== 0,
+          content: [{ type: "text", text: output || "MCPB pack completed." }],
+          details: { exitCode: result.code, command: command + " " + args.join(" "), warnings: validation.warnings },
+        }
+      } catch (error) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
+          details: {},
+        }
       }
     },
   })

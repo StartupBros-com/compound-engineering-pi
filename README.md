@@ -68,6 +68,9 @@ The package ships Pi-specific compatibility tools for migrated CE flows:
 - `subagent`
 - `mcporter_list`
 - `mcporter_call`
+- `mcpb_inspect`
+- `mcpb_import`
+- `mcpb_export`
 
 ### Pi-native runtime behavior
 
@@ -79,13 +82,21 @@ This repo intentionally keeps some behavior package-owned instead of relying onl
 - reproducible subagent wrapper generation for Pi environments
 - latest upstream `ce-*` naming while keeping Pi-friendly `/ce:*` aliases
 
-## Optional: MCP support via MCPorter
+## Optional: MCP support via MCPorter and MCPB
 
-For MCP interoperability, install [MCPorter](https://github.com/steipete/mcporter):
+For MCP runtime interoperability, install [MCPorter](https://github.com/steipete/mcporter):
 
 ```bash
 npm i -g mcporter
 ```
+
+For MCP bundle packing/validation, install the MCPB CLI when you need `mcpb_export` packing:
+
+```bash
+npm i -g @anthropic-ai/mcpb
+```
+
+`mcpb_import` does not run imported servers automatically; it unpacks into `~/.pi/agent/mcpb/` and writes a MCPorter config entry for later verification with `mcporter_list`.
 
 ## Community contribution
 
@@ -108,8 +119,11 @@ Typical refresh flow:
    - `src/workflow-context.ts`
    - `scripts/generate-agent-wrappers.mjs`
 3. Regenerate global wrappers:
-   - `node scripts/generate-agent-wrappers.mjs`
-4. Smoke test interactively in Pi:
+   - `npm run agents:generate`
+4. Verify wrapper aliases are current:
+   - `npm run agents:check`
+   - This must keep bare reviewer names such as `security-sentinel`, `performance-oracle`, `agent-native-reviewer`, and `learnings-researcher` available for the Pi review runtime.
+5. Smoke test interactively in Pi:
    - `/ce:brainstorm`
    - `/ce:plan`
    - `/ce:review`
