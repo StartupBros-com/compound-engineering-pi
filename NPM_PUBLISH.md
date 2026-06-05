@@ -1,5 +1,7 @@
 # Publish to npm (super simple)
 
+This repo is the StartupBros-maintained fork. Only publish to npm after an explicit release decision; otherwise keep validated work as a git commit/tag.
+
 If this is your first time publishing, run these exact commands in order.
 
 ## 0) Go to repo
@@ -37,7 +39,7 @@ npm run release:publish
 npm view compound-engineering-pi version
 ```
 
-You should see: `0.2.6`
+For the v0.2.7 release, you should see: `0.2.7`
 
 ## 5) Verify Pi install path
 
@@ -54,6 +56,13 @@ Run login again:
 
 ```bash
 npm login
+```
+
+### `EOTP`
+Publishing requires a one-time password. Re-run the publish command with the current OTP:
+
+```bash
+npm run release:publish -- --otp=123456
 ```
 
 ### `You do not have permission`
