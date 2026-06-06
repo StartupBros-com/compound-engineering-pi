@@ -10,6 +10,7 @@ const targetAgentsDir = process.env.CE_PI_AGENT_WRAPPER_DIR
   ? path.resolve(process.env.CE_PI_AGENT_WRAPPER_DIR)
   : path.join(os.homedir(), ".pi", "agent", "agents")
 const checkOnly = process.argv.includes("--check")
+const retiredWrapperNames = ["ce-polish-beta", "ce-session-extract", "ce-session-inventory"]
 
 const HEADER = `# Global Compound Engineering agent wrappers
 
@@ -62,6 +63,14 @@ async function writeFileIfChanged(filePath, content) {
   if (existing === content) return false
   if (!checkOnly) {
     await fs.writeFile(filePath, content, "utf8")
+  }
+  return true
+}
+
+async function removeFileIfExists(filePath) {
+  if (!(await pathExists(filePath))) return false
+  if (!checkOnly) {
+    await fs.rm(filePath, { force: true })
   }
   return true
 }
@@ -130,6 +139,10 @@ async function main() {
   for (const skillName of skillNames) {
     if (generatedAgentNames.has(skillName)) continue
     changed += Number(await writeFileIfChanged(path.join(targetAgentsDir, `${skillName}.md`), skillWrapperBody(skillName)))
+  }
+
+  for (const retiredName of retiredWrapperNames) {
+    changed += Number(await removeFileIfExists(path.join(targetAgentsDir, `${retiredName}.md`)))
   }
 
   if (checkOnly) {

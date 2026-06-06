@@ -14,6 +14,17 @@ const sourceRoot = process.env.COMPOUND_PLUGIN_SOURCE
 const sourcePluginDir = path.join(sourceRoot, "plugins", "compound-engineering")
 const targetPluginDir = path.join(repoRoot, "plugins", "compound-engineering")
 const piOwnedSkillNames = ["onboarding", "reproduce-bug", "slfg", "todo-resolve", "todo-triage"]
+const piOwnedAgentNames = [
+  "ce-cli-agent-readiness-reviewer",
+  "ce-cli-readiness-reviewer",
+  "ce-data-migration-expert",
+  "ce-data-migrations-reviewer",
+  "ce-dhh-rails-reviewer",
+  "ce-kieran-python-reviewer",
+  "ce-kieran-rails-reviewer",
+  "ce-kieran-typescript-reviewer",
+  "ce-schema-drift-detector",
+]
 const generatedRoot = await mkdtemp(path.join(os.tmpdir(), "compound-engineering-pi-sync-"))
 
 try {
@@ -34,7 +45,9 @@ try {
   const generatedMcporterPath = path.join(generatedPiRoot, "compound-engineering", "mcporter.json")
 
   const preservedPiOwnedSkillsDir = path.join(generatedRoot, "pi-owned-skills")
+  const preservedPiOwnedAgentsDir = path.join(generatedRoot, "pi-owned-agents")
   const preservedPiOwnedSkills = await preservePiOwnedSkills(preservedPiOwnedSkillsDir)
+  const preservedPiOwnedAgents = await preservePiOwnedAgents(preservedPiOwnedAgentsDir)
 
   console.log(`Syncing vendored plugin snapshot from ${sourcePluginDir}`)
   await replaceDir(targetPluginDir, sourcePluginDir)
@@ -46,6 +59,7 @@ try {
   if (await pathExists(generatedAgentsDir)) {
     console.log(`Syncing generated Pi agents from ${generatedAgentsDir}`)
     await replaceDir(path.join(repoRoot, "agents"), generatedAgentsDir)
+    await restorePiOwnedAgents(preservedPiOwnedAgentsDir, preservedPiOwnedAgents)
   } else {
     console.log("No generated Pi agents found; preserving existing agents directory if present.")
   }
@@ -59,7 +73,7 @@ try {
     await rm(targetMcporterPath, { force: true })
   }
 
-  console.log("Done. Note: prompts/, extensions/, and Pi-owned compatibility skills are preserved.")
+  console.log("Done. Note: prompts/, extensions/, Pi-owned compatibility skills, and Pi-owned agents are preserved.")
 } finally {
   await rm(generatedRoot, { recursive: true, force: true })
 }
@@ -100,6 +114,18 @@ async function preservePiOwnedSkills(preservedRoot: string): Promise<string[]> {
   return preserved
 }
 
+async function preservePiOwnedAgents(preservedRoot: string): Promise<string[]> {
+  const preserved = [] as string[]
+  await mkdir(preservedRoot, { recursive: true })
+  for (const agentName of piOwnedAgentNames) {
+    const source = path.join(repoRoot, "agents", `${agentName}.md`)
+    if (!(await pathExists(source))) continue
+    await cp(source, path.join(preservedRoot, `${agentName}.md`))
+    preserved.push(agentName)
+  }
+  return preserved
+}
+
 async function restorePiOwnedSkills(preservedRoot: string, skillNames: string[]) {
   for (const skillName of skillNames) {
     const target = path.join(repoRoot, "skills", skillName)
@@ -108,6 +134,17 @@ async function restorePiOwnedSkills(preservedRoot: string, skillNames: string[])
     }
     console.log(`Restoring Pi-owned compatibility skill ${skillName}`)
     await cp(path.join(preservedRoot, skillName), target, { recursive: true })
+  }
+}
+
+async function restorePiOwnedAgents(preservedRoot: string, agentNames: string[]) {
+  for (const agentName of agentNames) {
+    const target = path.join(repoRoot, "agents", `${agentName}.md`)
+    if (await pathExists(target)) {
+      throw new Error(`Upstream generated an agent named ${agentName}; resolve the conflict before preserving the Pi-owned copy.`)
+    }
+    console.log(`Restoring Pi-owned agent ${agentName}`)
+    await cp(path.join(preservedRoot, `${agentName}.md`), target)
   }
 }
 

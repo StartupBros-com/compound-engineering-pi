@@ -11,56 +11,60 @@ After installing, run `/ce-setup` in any project. It diagnoses your environment,
 | Component | Count |
 |-----------|-------|
 | Agents | 50+ |
-| Skills | 35+ |
+| Skills | 38+ |
 
 ## Skills
 
+The primary entry points for engineering work, invoked as slash commands. Detailed user-facing documentation for many skills lives in [`docs/skills/`](../../docs/skills/) — each linked skill name below points to its page (purpose, novel mechanics, use cases, chain position). Skills without dedicated docs are still listed; their `SKILL.md` in the source tree is authoritative.
+
 ### Core Workflow
 
-The primary entry points for engineering work are skills invoked with slash syntax:
+`ce-strategy` anchors the loop upstream; `ce-product-pulse` closes it with a read on user outcomes.
 
 | Skill | Description |
 |-------|-------------|
-| `/ce-ideate` | Optional big-picture ideation: generate and critically evaluate grounded ideas, then route the strongest one into brainstorming |
-| `/ce-brainstorm` | Interactive Q&A to think through a feature or problem and write a right-sized requirements doc before planning |
-| `/ce-plan` | Create structured plans for any multi-step task -- software features, research workflows, events, study plans -- with automatic confidence checking |
-| `/ce-code-review` | Structured code review with tiered persona agents, confidence gating, and dedup pipeline |
-| `/ce-work` | Execute work items systematically |
-| `/ce-debug` | Systematically find root causes and fix bugs -- traces causal chains, forms testable hypotheses, and implements test-first fixes |
-| `/ce-compound` | Document solved problems to compound team knowledge |
-| `/ce-compound-refresh` | Refresh stale or drifting learnings and decide whether to keep, update, replace, or archive them |
-| `/ce-optimize` | Run iterative optimization loops with parallel experiments, measurement gates, and LLM-as-judge quality scoring |
-
-For `/ce-optimize`, see [`skills/ce-optimize/README.md`](./skills/ce-optimize/README.md) for usage guidance, example specs, and links to the schema and workflow docs.
+| [`/ce-strategy`](../../docs/skills/ce-strategy.md) | Create or maintain `STRATEGY.md` — the product's target problem, approach, persona, key metrics, and tracks. Re-runnable to update. Read as grounding by `/ce-ideate`, `/ce-brainstorm`, and `/ce-plan` when present |
+| [`/ce-ideate`](../../docs/skills/ce-ideate.md) | Optional big-picture ideation: generate and critically evaluate grounded ideas, then route the strongest one into brainstorming |
+| [`/ce-brainstorm`](../../docs/skills/ce-brainstorm.md) | Interactive Q&A to think through a feature or problem and write a right-sized requirements doc before planning. Pass `output:html` to write the doc as a single self-contained HTML file instead of markdown (exclusive — md OR html, never both) |
+| [`/ce-plan`](../../docs/skills/ce-plan.md) | Create structured plans for any multi-step task -- software features, research workflows, events, study plans -- with automatic confidence checking. Pass `output:html` to write the plan as a single self-contained HTML file instead of markdown (exclusive — md OR html, never both) |
+| [`/ce-code-review`](../../docs/skills/ce-code-review.md) | Structured code review with tiered persona agents, confidence gating, and dedup pipeline |
+| [`/ce-work`](../../docs/skills/ce-work.md) | Execute work items systematically |
+| [`/ce-debug`](../../docs/skills/ce-debug.md) | Systematically find root causes and fix bugs -- traces causal chains, forms testable hypotheses, and implements test-first fixes |
+| [`/ce-compound`](../../docs/skills/ce-compound.md) | Document solved problems to compound team knowledge |
+| [`/ce-compound-refresh`](../../docs/skills/ce-compound-refresh.md) | Refresh stale or drifting learnings and decide whether to keep, update, replace, or archive them |
+| [`/ce-optimize`](../../docs/skills/ce-optimize.md) | Run iterative optimization loops with parallel experiments, measurement gates, and LLM-as-judge quality scoring |
+| [`/ce-product-pulse`](../../docs/skills/ce-product-pulse.md) | Generate a single-page, time-windowed report on usage, performance, errors, and followups. Saves reports to `docs/pulse-reports/` as a browseable timeline of what users experienced |
 
 ### Research & Context
 
 | Skill | Description |
 |-------|-------------|
-| `/ce-sessions` | Ask questions about session history across Claude Code, Codex, and Cursor |
-| `/ce-slack-research` | Search Slack for interpreted organizational context -- decisions, constraints, and discussion arcs |
+| [`/ce-sessions`](../../docs/skills/ce-sessions.md) | Ask questions about session history across Claude Code, Codex, and Cursor |
+| [`/ce-slack-research`](../../docs/skills/ce-slack-research.md) | Search Slack for interpreted organizational context -- decisions, constraints, and discussion arcs |
+| [`ce-riffrec-feedback-analysis`](../../docs/skills/ce-riffrec-feedback-analysis.md) | Convert [Riffrec](https://github.com/kieranklaassen/riffrec) recordings, videos, audio, or notes into structured feedback. Routes between setup, quick bug report, and extensive analysis that hands off to `ce-brainstorm` |
 
 ### Git Workflow
 
 | Skill | Description |
 |-------|-------------|
-| `ce-clean-gone-branches` | Clean up local branches whose remote tracking branch is gone |
-| `ce-commit` | Create a git commit with a value-communicating message |
-| `ce-commit-push-pr` | Commit, push, and open a PR with an adaptive description; also update an existing PR description, or generate a description on its own without committing |
-| `ce-worktree` | Manage Git worktrees for parallel development |
+| [`ce-clean-gone-branches`](../../docs/skills/ce-clean-gone-branches.md) | Clean up local branches whose remote tracking branch is gone |
+| [`ce-commit`](../../docs/skills/ce-commit.md) | Create a git commit with a value-communicating message |
+| [`ce-commit-push-pr`](../../docs/skills/ce-commit-push-pr.md) | Commit, push, and open a PR with an adaptive description; also update an existing PR description, or generate a description on its own without committing |
+| [`ce-worktree`](../../docs/skills/ce-worktree.md) | Manage Git worktrees for parallel development |
 
 ### Workflow Utilities
 
 | Skill | Description |
 |-------|-------------|
-| `/ce-demo-reel` | Capture a visual demo reel (GIF demos, terminal recordings, screenshots) for PRs with project-type-aware tier selection |
-| `/ce-report-bug` | Report a bug in the compound-engineering plugin |
-| `/ce-resolve-pr-feedback` | Resolve PR review feedback in parallel |
-| `/ce-test-browser` | Run browser tests on PR-affected pages |
-| `/ce-test-xcode` | Build and test iOS apps on simulator using XcodeBuildMCP |
-| `/ce-setup` | Diagnose environment, install missing tools, and bootstrap project config |
-| `/ce-update` | Check compound-engineering plugin version and fix stale cache (Claude Code only) |
-| `/ce-release-notes` | Summarize recent compound-engineering plugin releases, or answer a question about a past release with a version citation |
+| [`/ce-demo-reel`](../../docs/skills/ce-demo-reel.md) | Capture a visual demo reel (GIF demos, terminal recordings, screenshots) for PRs with project-type-aware tier selection |
+| [`/ce-promote`](../../docs/skills/ce-promote.md) | Draft user-facing announcement copy for a shipped feature (X post, changelog blurb, LinkedIn, email); voice-matched via the Spiral CLI when installed, a lite layer of editorial & social expertise without it |
+| [`/ce-report-bug`](../../docs/skills/ce-report-bug.md) | Report a bug in the compound-engineering plugin |
+| [`/ce-resolve-pr-feedback`](../../docs/skills/ce-resolve-pr-feedback.md) | Resolve PR review feedback in parallel |
+| [`/ce-test-browser`](../../docs/skills/ce-test-browser.md) | Run browser tests on PR-affected pages |
+| [`/ce-test-xcode`](../../docs/skills/ce-test-xcode.md) | Build and test iOS apps on simulator using XcodeBuildMCP |
+| [`/ce-setup`](../../docs/skills/ce-setup.md) | Diagnose environment, install missing tools, and bootstrap project config |
+| [`/ce-update`](../../docs/skills/ce-update.md) | Check compound-engineering plugin version and fix stale cache (Claude Code only) |
+| [`/ce-release-notes`](../../docs/skills/ce-release-notes.md) | Summarize recent compound-engineering plugin releases, or answer a question about a past release with a version citation |
 
 ### Development Frameworks
 
@@ -68,19 +72,21 @@ For `/ce-optimize`, see [`skills/ce-optimize/README.md`](./skills/ce-optimize/RE
 |-------|-------------|
 | `ce-agent-native-architecture` | Build AI agents using prompt-native architecture |
 | `ce-dhh-rails-style` | Write Ruby/Rails code in DHH's 37signals style |
-| `ce-frontend-design` | Create production-grade frontend interfaces |
+| [`ce-frontend-design`](../../docs/skills/ce-frontend-design.md) | Create production-grade frontend interfaces |
+| [`ce-polish`](../../docs/skills/ce-polish.md) | Conversational UX polish — start a dev server, open the feature in a browser, and iterate together; auto-detects 8 frameworks. Manual invocation only |
 
 ### Review & Quality
 
 | Skill | Description |
 |-------|-------------|
-| `ce-doc-review` | Review documents using parallel persona agents for role-specific feedback |
+| [`ce-doc-review`](../../docs/skills/ce-doc-review.md) | Review documents using parallel persona agents for role-specific feedback |
+| [`/ce-simplify-code`](../../docs/skills/ce-simplify-code.md) | Simplify recent code changes for reuse, quality, and efficiency — parallel reviewers find issues, fixes applied, behavior verified by tests |
 
 ### Content & Collaboration
 
 | Skill | Description |
 |-------|-------------|
-| `ce-proof` | Create, edit, and share documents via Proof collaborative editor |
+| [`ce-proof`](../../docs/skills/ce-proof.md) | Create, edit, and share documents via Proof collaborative editor |
 
 ### Automation & Tools
 
@@ -92,7 +98,7 @@ For `/ce-optimize`, see [`skills/ce-optimize/README.md`](./skills/ce-optimize/RE
 
 | Skill | Description |
 |-------|-------------|
-| `ce-polish-beta` | Human-in-the-loop polish phase after /ce-code-review — verifies review + CI, starts a dev server from `.claude/launch.json`, generates a testable checklist, and dispatches polish sub-agents for fixes. Emits stacked-PR seeds for oversized work |
+| `ce-dogfood-beta` | Diff-scoped browser QA of the active branch: builds an exhaustive test matrix of every change, drives the app with agent-browser, then auto-fixes issues, adds regression tests, and commits each fix until green |
 | `/lfg` | Full autonomous engineering workflow |
 
 ## Agents
@@ -105,26 +111,18 @@ Agents are specialized subagents invoked by skills — you typically don't call 
 |-------|-------------|
 | `ce-agent-native-reviewer` | Verify features are agent-native (action + context parity) |
 | `ce-api-contract-reviewer` | Detect breaking API contract changes |
-| `ce-cli-agent-readiness-reviewer` | Evaluate CLI agent-friendliness against 7 core principles |
-| `ce-cli-readiness-reviewer` | CLI agent-readiness persona for ce-code-review (conditional, structured JSON) |
 | `ce-architecture-strategist` | Analyze architectural decisions and compliance |
 | `ce-code-simplicity-reviewer` | Final pass for simplicity and minimalism |
 | `ce-correctness-reviewer` | Logic errors, edge cases, state bugs |
 | `ce-data-integrity-guardian` | Database migrations and data integrity |
-| `ce-data-migration-expert` | Validate ID mappings match production, check for swapped values |
-| `ce-data-migrations-reviewer` | Migration safety with confidence calibration |
+| `ce-data-migration-reviewer` | Schema drift, migration safety, mapping verification, deploy-window checks |
 | `ce-deployment-verification-agent` | Create Go/No-Go deployment checklists for risky data changes |
-| `ce-dhh-rails-reviewer` | Rails review from DHH's perspective |
 | `ce-julik-frontend-races-reviewer` | Review JavaScript/Stimulus code for race conditions |
-| `ce-kieran-rails-reviewer` | Rails code review with strict conventions |
-| `ce-kieran-python-reviewer` | Python code review with strict conventions |
-| `ce-kieran-typescript-reviewer` | TypeScript code review with strict conventions |
 | `ce-maintainability-reviewer` | Coupling, complexity, naming, dead code |
 | `ce-pattern-recognition-specialist` | Analyze code for patterns and anti-patterns |
 | `ce-performance-oracle` | Performance analysis and optimization |
 | `ce-performance-reviewer` | Runtime performance with confidence calibration |
 | `ce-reliability-reviewer` | Production reliability and failure modes |
-| `ce-schema-drift-detector` | Detect unrelated schema.rb changes in PRs |
 | `ce-security-reviewer` | Exploitable vulnerabilities with confidence calibration |
 | `ce-security-sentinel` | Security audits and vulnerability assessments |
 | `ce-swift-ios-reviewer` | Swift and iOS code review -- SwiftUI state, retain cycles, concurrency, Core Data threading, accessibility |

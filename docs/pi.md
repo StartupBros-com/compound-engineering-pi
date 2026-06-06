@@ -11,7 +11,7 @@ This guide explains how to use the Compound Engineering plugin in **Pi** with th
 # after npm publish:
 pi install npm:compound-engineering-pi
 # fallback (works now):
-pi install git:github.com/StartupBros/compound-engineering-pi@v0.2.7
+pi install git:github.com/StartupBros/compound-engineering-pi@v0.2.8
 
 # 2) Install MCPorter (for MCP-style tool access in Pi)
 npm i -g mcporter
@@ -40,7 +40,7 @@ You will get generated resources under your Pi directory:
 
 The published package already includes prebuilt `extensions/`, `skills/`, `agents/`, and compatibility `prompts/` for Pi package installs.
 
-This repo now tracks the newer upstream Compound Engineering skill set while keeping the older `/workflows-*` prompts as Pi-friendly compatibility aliases.
+This repo now tracks upstream Compound Engineering 3.11.1 while keeping the older `/workflows-*` prompts as Pi-friendly compatibility aliases.
 
 For package installs, `mcporter_list`/`mcporter_call` use a generated project/global MCPorter config when upstream defines MCP servers. The package does not ship a stale default MCP server config.
 

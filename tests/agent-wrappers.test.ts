@@ -45,6 +45,15 @@ async function readWrapper(targetDir: string, name: string): Promise<string> {
 	return fs.readFile(path.join(targetDir, `${name}.md`), "utf8");
 }
 
+async function exists(filePath: string): Promise<boolean> {
+	try {
+		await fs.access(filePath);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 describe("Compound Engineering global agent wrapper generator", () => {
 	test("generates bare aliases for ce-* reviewer agents", async () => {
 		await withTempDir(async (targetDir) => {
@@ -83,6 +92,22 @@ describe("Compound Engineering global agent wrapper generator", () => {
 			expect(staleCheck.exitCode).toBe(1);
 			expect(staleCheck.stderr).toContain("wrapper files are stale");
 			expect(await fs.readFile(stalePath, "utf8")).toBe("stale wrapper\n");
+		});
+	});
+
+	test("removes retired CE skill wrappers during generation", async () => {
+		await withTempDir(async (targetDir) => {
+			await fs.mkdir(targetDir, { recursive: true });
+			const retiredPath = path.join(targetDir, "ce-polish-beta.md");
+			await fs.writeFile(retiredPath, "old retired wrapper\n", "utf8");
+
+			const staleCheck = await runWrapperScript(targetDir, ["--check"]);
+			expect(staleCheck.exitCode).toBe(1);
+			expect(await fs.readFile(retiredPath, "utf8")).toBe("old retired wrapper\n");
+
+			expect((await runWrapperScript(targetDir)).exitCode).toBe(0);
+			expect(await exists(retiredPath)).toBe(false);
+			expect((await runWrapperScript(targetDir, ["--check"])).exitCode).toBe(0);
 		});
 	});
 });

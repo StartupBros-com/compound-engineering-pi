@@ -58,7 +58,7 @@ Legacy `workflows:*` aliases remain available for compatibility.
 
 ### Synced specialist skills and agents
 
-This package tracks upstream Compound Engineering 3.3.x content, currently bundling generated Pi skills plus generated Pi subagent definitions for review, research, design, workflow automation, git workflows, and more. A few Pi compatibility skills remain for legacy commands that are still useful locally.
+This package tracks upstream Compound Engineering 3.11.1 content, currently bundling generated Pi skills plus generated Pi subagent definitions for review, research, design, workflow automation, git workflows, and more. A few Pi compatibility skills and Pi-owned reviewer agents remain for local compatibility and enhanced Pi review coverage.
 
 ### Pi compatibility layer
 

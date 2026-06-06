@@ -47,6 +47,24 @@ describe("package integrity", () => {
     }
   })
 
+  test("Pi-owned reviewer agents are preserved across upstream syncs", async () => {
+    const agentNames = [
+      "ce-cli-agent-readiness-reviewer",
+      "ce-cli-readiness-reviewer",
+      "ce-data-migration-expert",
+      "ce-data-migrations-reviewer",
+      "ce-dhh-rails-reviewer",
+      "ce-kieran-python-reviewer",
+      "ce-kieran-rails-reviewer",
+      "ce-kieran-typescript-reviewer",
+      "ce-schema-drift-detector",
+    ]
+
+    for (const agentName of agentNames) {
+      expect(await pathExists(path.join(repoRoot, "agents", `${agentName}.md`))).toBe(true)
+    }
+  })
+
   test("Pi runtime support modules use extension-resolvable relative imports", async () => {
     const ceTodos = await readRepoFile("src", "ce-todos.ts")
 

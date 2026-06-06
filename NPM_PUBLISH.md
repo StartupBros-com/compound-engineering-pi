@@ -39,7 +39,7 @@ npm run release:publish
 npm view compound-engineering-pi version
 ```
 
-For the v0.2.7 release, you should see: `0.2.7`
+The reported version should match the version in `package.json` for the release you just published.
 
 ## 5) Verify Pi install path
 
