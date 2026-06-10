@@ -65,7 +65,7 @@ Otherwise — empty, an unresolved command string like `command -v codex 2>/dev/
 
 If `consent_granted` is not true (from config `work_delegate_consent`):
 
-Present a one-time consent warning using the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini, `ask_user` in Pi (requires the `pi-ask-user` extension)). The consent warning explains:
+Present a one-time consent warning using the platform's blocking question tool (`ask_user_question` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini, `ask_user_question` in Pi). The consent warning explains:
 - Delegation sends implementation units to `codex exec` as a structured prompt
 - **yolo mode** (`--dangerously-bypass-approvals-and-sandbox`): Full system access including network. Required for verification steps that run tests or install dependencies. **Recommended.**
 - **full-auto mode** (`-s workspace-write`): Workspace-write sandbox, no network access by default. Network can be re-enabled by setting `network_access = true` under `[sandbox_workspace_write]` in `~/.codex/config.toml`.

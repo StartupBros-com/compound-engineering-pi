@@ -41,7 +41,7 @@ These rules apply at all times during orchestration and synthesis.
 
 ## Execution
 
-If no question argument is provided, ask what the user wants to know about their session history. Use the platform's blocking question tool: `AskUserQuestion` in Claude Code (call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded), `request_user_input` in Codex, `ask_user` in Gemini, `ask_user` in Pi (requires the `pi-ask-user` extension). Fall back to asking in plain text only when no blocking tool exists in the harness or the call errors (e.g., Codex edit modes) — not because a schema load is required. Never silently skip the question.
+If no question argument is provided, ask what the user wants to know about their session history. Use the platform's blocking question tool: `ask_user_question` in Claude Code (call `ToolSearch` with `select:ask_user_question` first if its schema isn't loaded), `request_user_input` in Codex, `ask_user` in Gemini, `ask_user_question` in Pi. Fall back to asking in plain text only when no blocking tool exists in the harness or the call errors (e.g., Codex edit modes) — not because a schema load is required. Never silently skip the question.
 
 ### Step 1 — Determine scan window
 

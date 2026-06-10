@@ -12,7 +12,7 @@ export function transformTextBodyForPi(body: string): string {
     const bareAgentName = agentName.split(":").pop() ?? agentName
     const skillName = normalizePiName(bareAgentName)
     const trimmedArgs = args.trim().replace(/\s+/g, " ")
-    return `${prefix}Run subagent with agent=\"${skillName}\" and task=\"${trimmedArgs}\".`
+    return `${prefix}Run subagent with agent="${skillName}" and task="${trimmedArgs}".`
   })
 
   const skillInvocationPattern = /Skill\("([^"]+)",\s*"([^"]*)"\)/g
@@ -25,7 +25,7 @@ export function transformTextBodyForPi(body: string): string {
     return `\`${prompt}\``
   })
 
-  result = result.replace(/\bAskUserQuestion\b/g, "ask_user_question")
+  result = normalizeQuestionToolForPi(result)
   result = result.replace(/\bTodoWrite\b/g, "file-based todos (todos/ + /skill:file-todos)")
   result = result.replace(/\bTodoRead\b/g, "file-based todos (todos/ + /skill:file-todos)")
 
@@ -82,6 +82,16 @@ export function transformMarkdownDocumentForPi(raw: string): string {
 
 export function shouldTransformSkillMarkdownFile(filePath: string): boolean {
   return path.extname(filePath).toLowerCase() === ".md"
+}
+
+function normalizeQuestionToolForPi(value: string): string {
+  let result = value
+  result = result.replace(/\bAskUserQuestion\b/g, "ask_user_question")
+  result = result.replace(/`ask_user` in Pi \(requires the `pi-ask-user` extension\)/g, "`ask_user_question` in Pi")
+  result = result.replace(/ask_user in Pi \(requires the pi-ask-user extension\)/g, "ask_user_question in Pi")
+  result = result.replace(/`ask_user` in Pi/g, "`ask_user_question` in Pi")
+  result = result.replace(/ask_user in Pi/g, "ask_user_question in Pi")
+  return result
 }
 
 function rewriteSlashCommandExecutionForPi(body: string): string {

@@ -1,3 +1,5 @@
+/// <reference types="bun-types" />
+
 import { describe, expect, test } from "bun:test"
 import { promises as fs } from "fs"
 import path from "path"
@@ -96,14 +98,15 @@ describe("writePiBundle", () => {
     const agentsContent = await fs.readFile(agentsPath, "utf8")
     expect(agentsContent).toContain("BEGIN COMPOUND PI TOOL MAP")
     expect(agentsContent).toContain("pi-subagents")
-    expect(agentsContent).toContain("pi-ask-user")
+    expect(agentsContent).toContain("ask_user_question")
+    expect(agentsContent).not.toContain("pi-ask-user")
   })
 
   test("transforms Task calls in copied SKILL.md files", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "pi-skill-transform-"))
     const outputRoot = path.join(tempRoot, ".pi")
     const sourceSkillDir = path.join(tempRoot, "source-skill")
-    await fs.mkdir(sourceSkillDir, { recursive: true })
+    await fs.mkdir(path.join(sourceSkillDir, "references"), { recursive: true })
     await fs.writeFile(
       path.join(sourceSkillDir, "SKILL.md"),
       `---
@@ -116,7 +119,12 @@ Run these research agents:
 - Task compound-engineering:research:repo-research-analyst(feature_description)
 - Task compound-engineering:research:learnings-researcher(feature_description)
 - Task compound-engineering:review:code-simplicity-reviewer()
+Use AskUserQuestion, or say ask_user in Pi (requires the pi-ask-user extension).
 `,
+    )
+    await fs.writeFile(
+      path.join(sourceSkillDir, "references", "question-tools.md"),
+      "Use AskUserQuestion, not ask_user in Pi (requires the pi-ask-user extension).\n",
     )
 
     const bundle: PiBundle = {
@@ -137,7 +145,16 @@ Run these research agents:
     expect(installedSkill).toContain('Run subagent with agent="repo-research-analyst" and task="feature_description".')
     expect(installedSkill).toContain('Run subagent with agent="learnings-researcher" and task="feature_description".')
     expect(installedSkill).toContain('Run subagent with agent="code-simplicity-reviewer".')
+    expect(installedSkill).toContain("ask_user_question")
     expect(installedSkill).not.toContain("Task compound-engineering:")
+    expect(installedSkill).not.toContain("pi-ask-user")
+
+    const installedReference = await fs.readFile(
+      path.join(outputRoot, "skills", "ce-plan", "references", "question-tools.md"),
+      "utf8",
+    )
+    expect(installedReference).toContain("ask_user_question")
+    expect(installedReference).not.toContain("pi-ask-user")
   })
 
   test("writes to ~/.pi/agent style roots without nesting under .pi", async () => {

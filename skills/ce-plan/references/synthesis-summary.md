@@ -262,7 +262,7 @@ Planning: [1-3 line scope claim]
 No open decisions to weigh in on — proceeding to research. Interrupt if I have the scope wrong.
 ```
 
-Then continue to Phase 1 without waiting. Use prose for any user response that does arrive (no `AskUserQuestion` menu). Justification is Interaction Rule 5(a) in SKILL.md.
+Then continue to Phase 1 without waiting. Use prose for any user response that does arrive (no `ask_user_question` menu). Justification is Interaction Rule 5(a) in SKILL.md.
 
 ---
 

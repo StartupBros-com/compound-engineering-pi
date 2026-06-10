@@ -124,8 +124,8 @@ export function transformContentForPi(body: string): string {
     const skillName = normalizeName(finalSegment)
     const trimmedArgs = args.trim().replace(/\s+/g, " ")
     return trimmedArgs
-      ? `${prefix}Run subagent with agent=\"${skillName}\" and task=\"${trimmedArgs}\".`
-      : `${prefix}Run subagent with agent=\"${skillName}\".`
+      ? `${prefix}Run subagent with agent="${skillName}" and task="${trimmedArgs}".`
+      : `${prefix}Run subagent with agent="${skillName}".`
   })
 
   // Claude Code task-tracking primitives: current Task* API (TaskCreate/TaskUpdate/TaskList/TaskGet/TaskStop/TaskOutput)
@@ -136,6 +136,7 @@ export function transformContentForPi(body: string): string {
   )
   result = result.replace(/\bTodoWrite\b/g, "the platform's task-tracking primitive")
   result = result.replace(/\bTodoRead\b/g, "the platform's task-tracking primitive")
+  result = normalizeQuestionToolForPi(result)
 
   // /command-name or /workflows:command-name -> /workflows-command-name
   const slashCommandPattern = /(?<![:\w])\/([a-z][a-z0-9_:-]*?)(?=[\s,."')\]}`]|$)/gi
@@ -157,6 +158,16 @@ export function transformContentForPi(body: string): string {
     return `/${normalizeName(withoutPrefix)}`
   })
 
+  return result
+}
+
+function normalizeQuestionToolForPi(value: string): string {
+  let result = value
+  result = result.replace(/\bAskUserQuestion\b/g, "ask_user_question")
+  result = result.replace(/`ask_user` in Pi \(requires the `pi-ask-user` extension\)/g, "`ask_user_question` in Pi")
+  result = result.replace(/ask_user in Pi \(requires the pi-ask-user extension\)/g, "ask_user_question in Pi")
+  result = result.replace(/`ask_user` in Pi/g, "`ask_user_question` in Pi")
+  result = result.replace(/ask_user in Pi/g, "ask_user_question in Pi")
   return result
 }
 

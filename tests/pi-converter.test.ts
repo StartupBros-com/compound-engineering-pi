@@ -37,7 +37,7 @@ describe("convertClaudeToPi", () => {
     // commands-as-skills on other targets; Pi keeps it empty.
     expect(bundle.generatedSkills).toEqual([])
 
-    // Pi installs now depend on the community pi-subagents and pi-ask-user extensions,
+    // Pi installs now depend on pi-subagents plus Pi's ask_user_question tool,
     // so the converter emits no bundled extension. Legacy cleanup in the Pi writer
     // removes any prior compound-engineering-compat.ts on upgrade.
     expect(bundle.extensions).toEqual([])
@@ -82,7 +82,7 @@ describe("convertClaudeToPi", () => {
     expect(bundle.mcporterConfig).toBeUndefined()
   })
 
-  test("transforms Task calls, slash commands, and todo tool references; preserves AskUserQuestion", () => {
+  test("transforms Task calls, slash commands, todos, and question tools", () => {
     const plugin: ClaudePlugin = {
       root: "/tmp/plugin",
       manifest: { name: "fixture", version: "1.0.0" },
@@ -96,6 +96,7 @@ describe("convertClaudeToPi", () => {
             "- Task repo-research-analyst(feature_description)",
             "- Task learnings-researcher(feature_description)",
             "Use AskUserQuestion tool for follow-up.",
+            "If documenting tools, say ask_user in Pi (requires the pi-ask-user extension).",
             "Then use /workflows:work and /prompts:todo-resolve.",
             "Track progress with TodoWrite and TodoRead.",
           ].join("\n"),
@@ -118,10 +119,9 @@ describe("convertClaudeToPi", () => {
 
     expect(parsedPrompt.body).toContain("Run subagent with agent=\"repo-research-analyst\" and task=\"feature_description\".")
     expect(parsedPrompt.body).toContain("Run subagent with agent=\"learnings-researcher\" and task=\"feature_description\".")
-    // AskUserQuestion is preserved; skill source-side enumerations name each platform's
-    // blocking-question tool (including `ask_user` for Pi via pi-ask-user), so the
-    // converter no longer rewrites the token.
-    expect(parsedPrompt.body).toContain("AskUserQuestion")
+    expect(parsedPrompt.body).toContain("ask_user_question")
+    expect(parsedPrompt.body).not.toContain("AskUserQuestion")
+    expect(parsedPrompt.body).not.toContain("pi-ask-user")
     expect(parsedPrompt.body).toContain("/workflows-work")
     expect(parsedPrompt.body).toContain("/todo-resolve")
     expect(parsedPrompt.body).toContain("the platform's task-tracking primitive")
