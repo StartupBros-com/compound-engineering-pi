@@ -158,6 +158,34 @@ export function transformContentForPi(body: string): string {
     return `/${normalizeName(withoutPrefix)}`
   })
 
+  result = rewriteSlashCommandExecutionForPi(result)
+
+  return result
+}
+
+function rewriteSlashCommandExecutionForPi(body: string): string {
+  let result = body
+
+  result = result.replace(/Run `\/([a-z][a-z0-9_-]*)([^`]*)`/gi, (_match, commandName: string, rawArgs: string) => {
+    let args = (rawArgs ?? "").trim()
+    let background = false
+
+    if (args.endsWith("&")) {
+      args = args.slice(0, -1).trimEnd()
+      background = true
+    }
+
+    const prompt = args.length > 0 ? `/${commandName} ${args}` : `/${commandName}`
+    if (background) {
+      return `If the user explicitly wants background or remote execution, tell them to run \`${prompt} &\` out-of-band; do not launch it automatically from this workflow`
+    }
+    return `Tell the user to run \`${prompt}\` next in the current Pi session; do not launch it automatically from this workflow`
+  })
+
+  if (result !== body && !result.includes("Slash commands are Pi prompt templates")) {
+    result += "\n\n**Important:** Slash commands are Pi prompt templates, not shell executables. Keep local follow-ups session-native and user-visible; never launch nested Pi CLI processes from inside a workflow."
+  }
+
   return result
 }
 

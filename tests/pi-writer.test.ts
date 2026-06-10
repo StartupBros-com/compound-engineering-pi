@@ -124,7 +124,7 @@ Use AskUserQuestion, or say ask_user in Pi (requires the pi-ask-user extension).
     )
     await fs.writeFile(
       path.join(sourceSkillDir, "references", "question-tools.md"),
-      "Use AskUserQuestion, not ask_user in Pi (requires the pi-ask-user extension).\n",
+      "Use AskUserQuestion, not ask_user in Pi (requires the pi-ask-user extension). Run `/workflows-work docs/plans/foo.md`.\n",
     )
 
     const bundle: PiBundle = {
@@ -154,6 +154,8 @@ Use AskUserQuestion, or say ask_user in Pi (requires the pi-ask-user extension).
       "utf8",
     )
     expect(installedReference).toContain("ask_user_question")
+    expect(installedReference).toContain("current Pi session")
+    expect(installedReference).toContain("Slash commands are Pi prompt templates")
     expect(installedReference).not.toContain("pi-ask-user")
   })
 

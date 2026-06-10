@@ -605,8 +605,8 @@ After writing the plan file, use the **ask_user_question tool** to present these
 
 **Options:**
 1. **Open plan in editor** - Open the plan file for review
-2. **Use `/deepen-plan`** - Enhance each section with parallel research agents (best practices, performance, UI)
-3. **Use `/technical_review`** - Technical feedback from code-focused reviewers (DHH, Kieran, Simplicity)
+2. **Deepen with `ce-plan`** - Run the ce-plan deepening pass for best practices, performance, UI, and implementation risks
+3. **Review with `ce-doc-review`** - Document feedback from planning reviewers
 4. **Review and refine** - Improve the document through structured self-review
 5. **Share to Proof** - Upload to Proof for collaborative review and sharing
 6. **Use `/workflows-work`** - Begin implementing this plan locally. Pi will hand work off in a fresh session context when this plan already exists on disk.
@@ -615,8 +615,8 @@ After writing the plan file, use the **ask_user_question tool** to present these
 
 Based on selection:
 - **Open plan in editor** → Open `docs/plans/<plan_filename>.md` for the user if possible.
-- **`/deepen-plan`** → Do **not** spawn a nested `pi` process. Instead, tell the user to run `/deepen-plan docs/plans/<plan_filename>.md` next. Pi's command runtime will handle session-native handoff.
-- **`/technical_review`** → Do **not** spawn a nested `pi` process. Instead, tell the user to run `/technical_review docs/plans/<plan_filename>.md` next.
+- **Deepen with `ce-plan`** → Invoke the `ce-plan` skill in the current session with the existing plan path and explicit instruction to run the deepening pass. Do not spawn a nested `pi` process.
+- **Review with `ce-doc-review`** → Invoke the `ce-doc-review` skill in the current session with the plan path. Do not spawn a nested `pi` process.
 - **Review and refine** → Load `document-review` skill.
 - **Share to Proof** → Upload the plan to Proof, display the returned URL prominently, and if upload fails skip silently then return to the options.
 - **`/workflows-work`** → Do **not** spawn a nested `pi` process. Instead, tell the user to run `/workflows-work docs/plans/<plan_filename>.md` next. Pi's command runtime will handle the fresh-session work handoff natively.
@@ -624,11 +624,11 @@ Based on selection:
 - **Create Issue** → See "Issue Creation" section below.
 - **Other** (automatically provided) → Accept free text for rework or specific changes.
 
-**Important:** Slash commands (like `/deepen-plan`) are Pi command/runtime features, not shell executables. Never launch local slash-command follow-ups by shelling out to nested `pi --no-session` processes from inside this workflow.
+**Important:** Slash commands and CE skills are session-native handoffs, not shell executables. Never launch local follow-ups by shelling out to nested Pi CLI processes from inside this workflow.
 
 **Important:** The post-plan handoff should stay session-native and user-visible. Do not use `subagent` or nested `pi` CLI processes as a substitute for `/workflows-work`.
 
-**Note:** Even with ultrathink enabled, do **not** auto-run `/deepen-plan` by spawning a nested `pi` process. Offer the next-step command explicitly instead.
+**Note:** Even with ultrathink enabled, do **not** auto-run a deepening pass by spawning a nested `pi` process. Offer the next-step command explicitly or invoke the `ce-plan` skill session-natively when the user selects it.
 
 Loop back to options after Simplify or Other changes until user selects a next-step command or exits.
 
@@ -660,6 +660,6 @@ When user selects "Create Issue", detect their project tracker from CLAUDE.md:
 
 5. **After creation:**
    - Display the issue URL
-   - Ask if they want to proceed to `/workflows-work` or `/technical_review`
+   - Ask if they want to proceed to `/workflows-work` or `ce-doc-review`
 
 NEVER CODE! Just research and write the plan.

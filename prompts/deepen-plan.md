@@ -479,19 +479,19 @@ After writing the enhanced plan, use the **ask_user_question tool** to present t
 
 **Options:**
 1. **View diff** - Show what was added/changed
-2. **Use `/technical_review`** - Get feedback from reviewers on enhanced plan
+2. **Review with `ce-doc-review`** - Get feedback from document reviewers on the enhanced plan
 3. **Use `/workflows-work`** - Begin implementing this enhanced plan
 4. **Deepen further** - Run another round of research on specific sections
 5. **Revert** - Restore original plan (if backup exists)
 
 Based on selection:
 - **View diff** → Run `git diff [plan_path]` or show before/after
-- **`/technical_review`** → Run `pi --no-session -p "/technical_review [plan_path]"`
-- **`/workflows-work`** → Run `pi --no-session -p "/workflows-work [plan_path]"`
+- **Review with `ce-doc-review`** → Invoke the `ce-doc-review` skill in the current session with `[plan_path]`; do not shell out to a nested `pi` process.
+- **`/workflows-work`** → Tell the user to run `/workflows-work [plan_path]` next in the current Pi session; do not shell out to a nested `pi` process.
 - **Deepen further** → Ask which sections need more research, then re-run those agents
 - **Revert** → Restore from git or backup
 
-**Important:** Slash commands (like `/workflows-work`) are Pi prompt templates, not shell executables. Never run `/...` directly via bash.
+**Important:** Slash commands (like `/workflows-work`) are Pi prompt templates, not shell executables. Keep local follow-ups session-native and user-visible; never launch nested Pi CLI processes from inside this workflow.
 
 ## Example Enhancement
 
@@ -502,7 +502,7 @@ Based on selection:
 Use React Query for data fetching with optimistic updates.
 ```
 
-**After (from /workflows-deepen-plan):**
+**After (from a plan-deepening pass):**
 ```markdown
 ## Technical Approach
 
