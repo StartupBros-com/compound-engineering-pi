@@ -132,17 +132,6 @@ const COMMAND_SPECS: CommandSpec[] = [
     source: { kind: "skill", skillName: "ce-test-browser" },
   },
   {
-    command: "feature-video",
-    description: "Record a feature walkthrough video",
-    source: { kind: "skill", skillName: "ce-demo-reel" },
-    deprecatedMessage: "/feature-video is deprecated; running /ce-demo-reel",
-  },
-  {
-    command: "ce-demo-reel",
-    description: "Record a visual PR demo reel",
-    source: { kind: "skill", skillName: "ce-demo-reel" },
-  },
-  {
     command: "todo-resolve",
     description: "Resolve ready Compound Engineering todos",
     source: { kind: "skill", skillName: "todo-resolve" },
@@ -174,29 +163,9 @@ const COMMAND_SPECS: CommandSpec[] = [
     source: { kind: "skill", skillName: "reproduce-bug" },
   },
   {
-    command: "report-bug-ce",
-    description: "Report a bug in compound engineering",
-    source: { kind: "skill", skillName: "ce-report-bug" },
-  },
-  {
-    command: "ce-report-bug",
-    description: "Report a bug in compound engineering",
-    source: { kind: "skill", skillName: "ce-report-bug" },
-  },
-  {
     command: "onboarding",
     description: "Generate repository onboarding guidance",
     source: { kind: "skill", skillName: "onboarding" },
-  },
-  {
-    command: "ce:changelog",
-    description: "Create release notes for recent changes",
-    source: { kind: "skill", skillName: "ce-release-notes" },
-  },
-  {
-    command: "ce-release-notes",
-    description: "Create release notes for recent changes",
-    source: { kind: "skill", skillName: "ce-release-notes" },
   },
   {
     command: "git-commit",

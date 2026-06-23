@@ -227,9 +227,9 @@ Analyze how this was introduced and what allowed it to survive. Note any systemi
 
 #### Skill-owned branch (created in Phase 3): default to commit-and-PR without prompting
 
-1. **Check for contextual overrides first.** Look at the user's original prompt, loaded memories, and the user/repo `AGENTS.md` or `CLAUDE.md` for preferences that conflict with auto commit-and-PR — for example, "always review before pushing", "open PRs as drafts", or "don't open PRs from skills". A signal must be an explicit instruction or a clearly applicable rule, not a vague tonal cue. If any apply, honor them — switch to the pre-existing-branch menu below, or skip the PR step entirely, whichever matches the user's stated preference.
+1. **Check for contextual overrides first.** Look at the user's original prompt, loaded memories, and the project's active instructions already in your context for preferences that conflict with auto commit-and-PR — for example, "always review before pushing", "open PRs as drafts", or "don't open PRs from skills". A signal must be an explicit instruction or a clearly applicable rule, not a vague tonal cue. If any apply, honor them — switch to the pre-existing-branch menu below, or skip the PR step entirely, whichever matches the user's stated preference.
 2. **Briefly preview what will happen** — what will be committed, on what branch, and that a PR will be opened — then proceed without waiting for confirmation. The preview exists so the user can interrupt; it is not a blocking question. Format and length are your call; keep it scannable.
-3. **Run `/ce-commit-push-pr`.** When the entry came from an issue tracker, include the appropriate auto-close syntax for that tracker in the location it requires — most trackers parse PR descriptions (e.g., `Fixes #N` for GitHub, `Closes ABC-123` for Linear), but some only parse commit messages (e.g., Jira Smart Commits) — so the diagnosis and fix flow back to the issue and it closes on merge. Surface the resulting PR URL.
+3. **Tell the user to run `/ce-commit-push-pr` next in the current Pi session; do not launch it automatically from this workflow.** When the entry came from an issue tracker, include the appropriate auto-close syntax for that tracker in the location it requires — most trackers parse PR descriptions (e.g., `Fixes #N` for GitHub, `Closes ABC-123` for Linear), but some only parse commit messages (e.g., Jira Smart Commits) — so the diagnosis and fix flow back to the issue and it closes on merge. Surface the resulting PR URL.
 
 #### Pre-existing branch (skill did not create it): ask the user
 
@@ -249,4 +249,7 @@ Most bugs are localized mechanical fixes (typo, missed null check, missing impor
 - **Offer neutrally** when the lesson can be stated in one sentence — e.g., "X.foo() returns T | undefined when Y, not just T", or "the diagnostic path was non-obvious and worth recording." If you cannot articulate the lesson, skip rather than offer.
 - **Lean into the offer** when the pattern appears in 3+ locations OR the root cause reveals a wrong assumption about a shared dependency, framework, or convention that other code is likely to repeat.
 
-When offering, use the blocking question tool described above. If the user accepts, run `/ce-compound`, then commit the resulting learning doc to the same branch and push so the open PR picks up the new commit.
+When offering, use the blocking question tool described above. If the user accepts, Tell the user to run `/ce-compound` next in the current Pi session; do not launch it automatically from this workflow, then commit the resulting learning doc to the same branch and push so the open PR picks up the new commit.
+
+
+**Important:** Slash commands are Pi prompt templates, not shell executables. Keep local follow-ups session-native and user-visible; never launch nested Pi CLI processes from inside a workflow.

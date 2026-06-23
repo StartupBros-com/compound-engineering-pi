@@ -114,8 +114,9 @@ a section with placeholder prose is worse than omitting it.
 
 - **System-Wide Impact** — include when the change affects cross-cutting
   concerns (data lifecycles, auth boundaries, performance posture, cardinal
-  rules, shared infrastructure). Skip for changes localized to one component
-  where the impact is self-evident.
+  rules, shared infrastructure, agent/tool parity, prompt context, shared
+  workspaces). Skip for changes localized to one component where the impact is
+  self-evident.
 
 - **Risks & Dependencies** — include when there are real risks worth flagging
   (external service changes, version pins under churn, behavioral assumptions
@@ -212,12 +213,12 @@ plan.
 - **`type`** — conventional-commit-prefix-aligned classification (`feat`,
   `fix`, `refactor`, `chore`, `docs`, `perf`, `test`, etc.). Carries the
   intent the eventual commit message should reflect.
-- **`status`** — `active` on creation; `ce-work` flips to `completed` on
-  ship. `ce-plan`'s Phase 0.1 resume fast path keys on `active`. In HTML,
-  status MUST render as `<span class="status">{value}</span>` so the flip
-  mechanic can locate and rewrite it by selector (see
-  `references/html-rendering.md`).
 - **`date`** — creation date in ISO 8601 (`YYYY-MM-DD`), ASCII digits only.
+
+Plans carry **no `status` field** — a plan is a decision artifact, not a
+tracked work item. `ce-work` does not mutate the plan at ship time;
+whether a plan shipped is derived from git, not stored in the doc. Do not
+add a `status` field or an `active → completed` lifecycle.
 
 ### Optional but well-known
 
@@ -227,8 +228,7 @@ semantics so downstream tooling can rely on them:
 - **`origin`** — repo-relative path to an upstream brainstorm requirements
   doc (e.g., `docs/brainstorms/2026-05-12-pagination-requirements.md`).
   Set when planning from an upstream brainstorm; carried for traceability
-  and re-resolved when `ce-plan` re-deepens. The HITL Proof flow uses
-  `origin` to trace back to the source brainstorm.
+  and re-resolved when `ce-plan` re-deepens.
 - **`deepened`** — ISO 8601 date marking the first time the confidence
   check substantively strengthened the plan. Presence affects Phase 0.1
   resume fast-path logic (see `references/deepening-workflow.md`).
@@ -243,8 +243,8 @@ semantics so downstream tooling can rely on them:
 
 Field names are stable across plan revisions — never rename a field or
 repurpose its semantics. Agents composing new plans MUST use these exact
-names; adding new fields is fine, but renaming `status` to `state` or
-`origin` to `source` breaks the downstream consumers above.
+names; adding new fields is fine, but renaming `origin` to `source` or
+`date` to `created` breaks the downstream consumers above.
 
 ## ID and content rules
 

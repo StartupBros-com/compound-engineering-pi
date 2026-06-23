@@ -55,28 +55,21 @@ async function exists(filePath: string): Promise<boolean> {
 }
 
 describe("Compound Engineering global agent wrapper generator", () => {
-	test("generates bare aliases for ce-* reviewer agents", async () => {
+	test("generates skill wrappers and aliases for package-owned Pi agents", async () => {
 		await withTempDir(async (targetDir) => {
 			const result = await runWrapperScript(targetDir);
 			expect(result.exitCode).toBe(0);
 
-			const securityAlias = await readWrapper(targetDir, "security-sentinel");
-			const ceSecurity = await readWrapper(targetDir, "ce-security-sentinel");
+			const ceWork = await readWrapper(targetDir, "ce-work");
+			expect(ceWork).toContain("name: ce-work");
+			expect(ceWork).toContain("skill: ce-work");
 
-			expect(securityAlias).toContain("name: security-sentinel");
-			expect(securityAlias).not.toContain("name: ce-security-sentinel");
-			expect(ceSecurity).toContain("name: ce-security-sentinel");
+			const railsAlias = await readWrapper(targetDir, "dhh-rails-reviewer");
+			const ceRails = await readWrapper(targetDir, "ce-dhh-rails-reviewer");
 
-			for (const alias of [
-				"agent-native-reviewer",
-				"learnings-researcher",
-				"performance-oracle",
-				"architecture-strategist",
-				"pattern-recognition-specialist",
-				"code-simplicity-reviewer",
-			]) {
-				expect(await readWrapper(targetDir, alias)).toContain(`name: ${alias}`);
-			}
+			expect(railsAlias).toContain("name: dhh-rails-reviewer");
+			expect(railsAlias).not.toContain("name: ce-dhh-rails-reviewer");
+			expect(ceRails).toContain("name: ce-dhh-rails-reviewer");
 		});
 	});
 
@@ -85,7 +78,7 @@ describe("Compound Engineering global agent wrapper generator", () => {
 			expect((await runWrapperScript(targetDir)).exitCode).toBe(0);
 			expect((await runWrapperScript(targetDir, ["--check"])).exitCode).toBe(0);
 
-			const stalePath = path.join(targetDir, "security-sentinel.md");
+			const stalePath = path.join(targetDir, "ce-work.md");
 			await fs.writeFile(stalePath, "stale wrapper\n", "utf8");
 
 			const staleCheck = await runWrapperScript(targetDir, ["--check"]);

@@ -43,19 +43,33 @@ const EXTRA_LEGACY_ARTIFACTS_BY_PLUGIN: Record<string, LegacyPluginArtifacts> = 
       "ce:review-beta",
       "ce:work",
       "ce:work-beta",
+      "ce-agent-native-architecture",
+      "ce-agent-native-audit",
       "ce-audit",
+      "ce-clean-gone-branches",
       "ce-claude-permissions-optimizer",
+      "ce-demo-reel",
       "ce-design",
+      "ce-dhh-rails-style",
       "ce-doctor",
       "ce-document-review",
+      "ce-frontend-design",
+      "ce-gemini-imagegen",
       "ce-feature-video",
       "ce-orchestrating-swarms",
       "ce-plan-beta",
+      "ce-polish-beta",
       "ce-pr-description",
       "ce-pr-stack",
+      "ce-release-notes",
+      "ce-report-bug",
       "ce-reproduce-bug",
       "ce-review",
       "ce-review-beta",
+      "ce-sessions",
+      "ce-slack-research",
+      "ce-session-extract",
+      "ce-session-inventory",
       "ce-update",
       "changelog",
       "claude-permissions-optimizer",
@@ -122,6 +136,49 @@ const EXTRA_LEGACY_ARTIFACTS_BY_PLUGIN: Record<string, LegacyPluginArtifacts> = 
       "workflows:work",
     ],
     agents: [
+      "ce-adversarial-document-reviewer",
+      "ce-adversarial-reviewer",
+      "ce-agent-native-reviewer",
+      "ce-ankane-readme-writer",
+      "ce-api-contract-reviewer",
+      "ce-architecture-strategist",
+      "ce-best-practices-researcher",
+      "ce-code-simplicity-reviewer",
+      "ce-coherence-reviewer",
+      "ce-correctness-reviewer",
+      "ce-data-integrity-guardian",
+      "ce-data-migration-reviewer",
+      "ce-deployment-verification-agent",
+      "ce-design-implementation-reviewer",
+      "ce-design-iterator",
+      "ce-design-lens-reviewer",
+      "ce-feasibility-reviewer",
+      "ce-figma-design-sync",
+      "ce-framework-docs-researcher",
+      "ce-git-history-analyzer",
+      "ce-issue-intelligence-analyst",
+      "ce-julik-frontend-races-reviewer",
+      "ce-learnings-researcher",
+      "ce-maintainability-reviewer",
+      "ce-pattern-recognition-specialist",
+      "ce-performance-oracle",
+      "ce-performance-reviewer",
+      "ce-previous-comments-reviewer",
+      "ce-pr-comment-resolver",
+      "ce-product-lens-reviewer",
+      "ce-project-standards-reviewer",
+      "ce-reliability-reviewer",
+      "ce-repo-research-analyst",
+      "ce-scope-guardian-reviewer",
+      "ce-security-lens-reviewer",
+      "ce-security-reviewer",
+      "ce-security-sentinel",
+      "ce-session-historian",
+      "ce-slack-researcher",
+      "ce-spec-flow-analyzer",
+      "ce-swift-ios-reviewer",
+      "ce-testing-reviewer",
+      "ce-web-researcher",
       "adversarial-document-reviewer",
       "adversarial-reviewer",
       "agent-native-reviewer",
@@ -131,6 +188,8 @@ const EXTRA_LEGACY_ARTIFACTS_BY_PLUGIN: Record<string, LegacyPluginArtifacts> = 
       "best-practices-researcher",
       "bug-reproduction-validator",
       "ce-bug-reproduction-validator",
+      "ce-cli-agent-readiness-reviewer",
+      "ce-cli-readiness-reviewer",
       "ce-lint",
       "cli-agent-readiness-reviewer",
       "cli-readiness-reviewer",
@@ -138,12 +197,15 @@ const EXTRA_LEGACY_ARTIFACTS_BY_PLUGIN: Record<string, LegacyPluginArtifacts> = 
       "coherence-reviewer",
       "correctness-reviewer",
       "data-integrity-guardian",
+      "ce-data-migration-expert",
+      "ce-data-migrations-reviewer",
       "data-migration-expert",
       "data-migrations-reviewer",
       "deployment-verification-agent",
       "design-implementation-reviewer",
       "design-iterator",
       "design-lens-reviewer",
+      "ce-dhh-rails-reviewer",
       "dhh-rails-reviewer",
       "every-style-editor",
       "feasibility-reviewer",
@@ -152,6 +214,9 @@ const EXTRA_LEGACY_ARTIFACTS_BY_PLUGIN: Record<string, LegacyPluginArtifacts> = 
       "git-history-analyzer",
       "issue-intelligence-analyst",
       "julik-frontend-races-reviewer",
+      "ce-kieran-python-reviewer",
+      "ce-kieran-rails-reviewer",
+      "ce-kieran-typescript-reviewer",
       "kieran-python-reviewer",
       "kieran-rails-reviewer",
       "kieran-typescript-reviewer",
@@ -168,6 +233,7 @@ const EXTRA_LEGACY_ARTIFACTS_BY_PLUGIN: Record<string, LegacyPluginArtifacts> = 
       "project-standards-reviewer",
       "reliability-reviewer",
       "repo-research-analyst",
+      "ce-schema-drift-detector",
       "schema-drift-detector",
       "scope-guardian-reviewer",
       "security-lens-reviewer",
@@ -238,6 +304,7 @@ const EXTRA_LEGACY_ARTIFACTS_BY_PLUGIN: Record<string, LegacyPluginArtifacts> = 
 export type LegacyTargetArtifacts = {
   skills: string[]
   prompts: string[]
+  agents?: string[]
 }
 
 export type LegacyTargetFileArtifacts = {
@@ -296,7 +363,9 @@ export function getLegacyCodexArtifacts(bundle: CodexBundle): LegacyTargetArtifa
   // touching unrelated user skills.
   const skills = new Set<string>()
   const prompts = new Set<string>()
+  const agents = new Set<string>()
   const currentPromptFiles = new Set<string>()
+  const currentAgentFiles = new Set<string>((bundle.agents ?? []).map((agent) => `${sanitizePathName(agent.name)}.toml`))
 
   for (const prompt of bundle.prompts) {
     currentPromptFiles.add(`${sanitizePathName(prompt.name)}.md`)
@@ -307,7 +376,12 @@ export function getLegacyCodexArtifacts(bundle: CodexBundle): LegacyTargetArtifa
     addLegacySkillVariants(skills, name, { includeRawColon: true })
   }
   for (const name of extras.agents ?? []) {
-    skills.add(normalizeCodexName(name))
+    const normalized = normalizeCodexName(name)
+    skills.add(normalized)
+    const agentFile = `${normalized}.toml`
+    if (!currentAgentFiles.has(agentFile)) {
+      agents.add(agentFile)
+    }
   }
   for (const name of extras.commands ?? []) {
     const normalized = normalizeCodexName(name)
@@ -321,16 +395,19 @@ export function getLegacyCodexArtifacts(bundle: CodexBundle): LegacyTargetArtifa
   return {
     skills: [...skills].sort(),
     prompts: [...prompts].sort(),
+    agents: [...agents].sort(),
   }
 }
 
 export function getLegacyPiArtifacts(bundle: PiBundle): LegacyTargetArtifacts {
   const skills = new Set<string>()
   const prompts = new Set<string>()
+  const agents = new Set<string>()
   const currentSkills = new Set<string>([
     ...bundle.generatedSkills.map((skill) => normalizePiName(skill.name)),
     ...bundle.skillDirs.map((skill) => normalizePiName(skill.name)),
   ])
+  const currentAgentFiles = new Set<string>(bundle.agents.map((agent) => `${sanitizePathName(agent.name)}.md`))
   const currentPromptFiles = new Set<string>()
 
   for (const prompt of bundle.prompts) {
@@ -346,6 +423,10 @@ export function getLegacyPiArtifacts(bundle: PiBundle): LegacyTargetArtifacts {
     if (!currentSkills.has(skillName)) {
       skills.add(skillName)
     }
+    const agentFile = `${sanitizePathName(name)}.md`
+    if (!currentAgentFiles.has(agentFile)) {
+      agents.add(agentFile)
+    }
   }
   for (const name of extras.commands ?? []) {
     const promptFile = `${normalizePiName(name)}.md`
@@ -357,6 +438,7 @@ export function getLegacyPiArtifacts(bundle: PiBundle): LegacyTargetArtifacts {
   return {
     skills: [...skills].sort(),
     prompts: [...prompts].sort(),
+    agents: [...agents].sort(),
   }
 }
 

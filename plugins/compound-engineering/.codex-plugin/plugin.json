@@ -1,6 +1,6 @@
 {
   "name": "compound-engineering",
-  "version": "3.11.1",
+  "version": "3.13.1",
   "description": "AI-powered development tools for code review, research, design, and workflow automation.",
   "author": {
     "name": "Kieran Klaassen",
@@ -19,14 +19,13 @@
     "ruby",
     "python",
     "typescript",
-    "knowledge-management",
-    "image-generation"
+    "knowledge-management"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Compound Engineering",
-    "shortDescription": "AI-powered development tools for code review, research, design, and workflow automation.",
-    "longDescription": "Compound Engineering is a suite of skills and agents that make each unit of engineering work easier than the last. Brainstorm requirements, plan implementations, review code with specialized reviewers, research institutional learnings, and capture solved problems so future work benefits. Skills install natively via Codex; for the full experience with specialized review and research agents, run the companion Bun converter after install (see README).",
+    "shortDescription": "AI-powered development skills for code review, research, planning, and workflow automation.",
+    "longDescription": "Compound Engineering is a suite of self-contained skills that make each unit of engineering work easier than the last. Brainstorm requirements, plan implementations, review code with skill-local reviewer prompts, research institutional learnings, and capture solved problems so future work benefits. Skills install natively via Codex; no companion custom-agent install step is required.",
     "developerName": "Every",
     "category": "Coding",
     "capabilities": [

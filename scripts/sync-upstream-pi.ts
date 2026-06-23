@@ -11,7 +11,7 @@ const sourceRoot = process.env.COMPOUND_PLUGIN_SOURCE
     ? defaultCacheSource
     : siblingSource
 
-const sourcePluginDir = path.join(sourceRoot, "plugins", "compound-engineering")
+const sourcePluginDir = await resolveSourcePluginDir(sourceRoot)
 const targetPluginDir = path.join(repoRoot, "plugins", "compound-engineering")
 const piOwnedSkillNames = ["onboarding", "reproduce-bug", "slfg", "todo-resolve", "todo-triage"]
 const piOwnedAgentNames = [
@@ -50,7 +50,7 @@ try {
   const preservedPiOwnedAgents = await preservePiOwnedAgents(preservedPiOwnedAgentsDir)
 
   console.log(`Syncing vendored plugin snapshot from ${sourcePluginDir}`)
-  await replaceDir(targetPluginDir, sourcePluginDir)
+  await replacePluginSnapshot(targetPluginDir, sourcePluginDir)
 
   console.log(`Syncing generated Pi skills from ${generatedSkillsDir}`)
   await replaceDir(path.join(repoRoot, "skills"), generatedSkillsDir)
@@ -92,9 +92,59 @@ async function run(command: string, args: string[], cwd: string) {
   }
 }
 
+async function resolveSourcePluginDir(root: string): Promise<string> {
+  const legacyPluginDir = path.join(root, "plugins", "compound-engineering")
+  if (await pathExists(legacyPluginDir)) return legacyPluginDir
+
+  if (await pathExists(path.join(root, ".claude-plugin", "plugin.json"))) {
+    return root
+  }
+
+  throw new Error(
+    `Could not find a Compound Engineering plugin root at ${root} or ${legacyPluginDir}`,
+  )
+}
+
 async function replaceDir(target: string, source: string) {
   await rm(target, { recursive: true, force: true })
   await cp(source, target, { recursive: true })
+}
+
+async function replacePluginSnapshot(target: string, source: string) {
+  await rm(target, { recursive: true, force: true })
+  await mkdir(target, { recursive: true })
+
+  const snapshotEntries = [
+    ".agents",
+    ".claude",
+    ".claude-plugin",
+    ".codex-plugin",
+    ".compound-engineering",
+    ".cursor-plugin",
+    ".opencode",
+    ".pi",
+    "agents",
+    "docs",
+    "skills",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "CONCEPTS.md",
+    "GEMINI.md",
+    "LICENSE",
+    "PRIVACY.md",
+    "README.md",
+    "SECURITY.md",
+    "favicon.png",
+    "gemini-extension.json",
+    "package.json",
+  ]
+
+  for (const entry of snapshotEntries) {
+    const sourcePath = path.join(source, entry)
+    if (!(await pathExists(sourcePath))) continue
+    await cp(sourcePath, path.join(target, entry), { recursive: true })
+  }
 }
 
 async function copyFileToPath(source: string, target: string) {

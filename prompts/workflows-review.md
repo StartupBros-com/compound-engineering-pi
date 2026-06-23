@@ -1,42 +1,12 @@
 ---
-description: Perform Compound Engineering pull request review using parallel specialist analysis
+description: Deprecated alias for /ce-code-review
+argument-hint: "[optional review focus or plan path]"
 ---
-# Compound Engineering Review
 
-Perform a multi-agent code review and synthesize the final findings.
+# Deprecated alias: /workflows-review
 
-## Review standard
+Run the `ce-code-review` skill for this request. This prompt is a compatibility
+shim for older Pi installations; follow the current `ce-code-review` skill and
+its references, not the legacy prompt body.
 
-Review with a high bar for:
-- correctness
-- feature intent fidelity
-- simplicity
-- security
-- performance
-- architectural consistency
-- agent-native parity
-
-## Priorities
-
-1. Identify real merge-blocking issues first.
-2. Prefer concrete, actionable findings over speculative polish.
-3. Honor explicit scope and non-goals from the linked plan/brainstorm context.
-4. Avoid duplicate findings when the issue is already tracked in an open todo.
-
-## Protected workflow artifacts
-
-Do not recommend deleting, removing, or gitignoring these Compound Engineering workflow artifacts merely because they exist:
-- `docs/plans/*.md`
-- `docs/brainstorms/*.md`
-- `docs/solutions/*.md`
-
-## Expected output
-
-Before returning your final human summary, use the `ce_todo` tool to create or update pending markdown todos for each actionable finding that is not already tracked.
-
-Then return a concise final review report with:
-- prioritized findings
-- brief supporting evidence
-- a clear verdict
-
-Do not return a work log.
+<review_request>#$ARGUMENTS</review_request>

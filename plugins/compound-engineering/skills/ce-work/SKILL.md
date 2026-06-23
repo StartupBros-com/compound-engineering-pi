@@ -58,7 +58,7 @@ Determine how to proceed based on what was provided in `<input_document>`.
    - If anything is unclear or ambiguous, ask clarifying questions now
    - If clarifying questions were needed above, get user approval on the resolved answers. If no clarifications were needed, proceed without a separate approval step — plan scope is the plan's authority, not something to renegotiate
    - **Do not skip this** - better to ask questions now than build the wrong thing
-   - **Do not edit the plan body during execution.** The plan is a decision artifact; progress lives in git commits and the task tracker. The only plan mutation during ce-work is the final `status: active → completed` flip at shipping (see `references/shipping-workflow.md` Phase 4 Step 2). Legacy plans may contain `- [ ]` / `- [x]` marks on unit headings — ignore them as state; per-unit completion is determined during execution by reading the current file state.
+   - **Do not edit the plan body during execution.** The plan is a decision artifact; progress lives in git commits and the task tracker, not the plan. `ce-work` does not mutate the plan — whether it shipped is derived from git, not recorded in the doc. Legacy plans may contain `- [ ]` / `- [x]` marks on unit headings or a `status:` field — ignore them as state; per-unit completion is determined during execution by reading the current file state.
 
 2. **Setup Environment**
 
@@ -100,7 +100,8 @@ Determine how to proceed based on what was provided in `<input_document>`.
    **Option B: Use a worktree (recommended for parallel development)**
    ```bash
    skill: ce-worktree
-   # The skill will create a new branch from the default branch in an isolated worktree
+   # Ensures isolation: detects an existing worktree, prefers the harness's
+   # native worktree tool, else creates one from the default branch
    ```
 
    **Option C: Continue on the default branch**
@@ -147,7 +148,7 @@ Determine how to proceed based on what was provided in `<input_document>`.
 
    **Subagent isolation** — give each parallel subagent its own working tree:
    - **Claude Code (`Agent` tool):** pass `isolation: "worktree"` and `run_in_background: true`. The harness creates a per-subagent worktree under `.claude/worktrees/agent-<id>` on its own branch. Verify `.claude/worktrees/` is gitignored before relying on this.
-   - **Other platforms** without built-in worktree isolation (e.g., Codex `spawn_agent`, Pi `subagent`): subagents share the orchestrator's directory.
+   - **Other platforms** without built-in worktree isolation: subagents share the orchestrator's directory.
 
    **Subagent dispatch** uses your available subagent or task spawning mechanism. For each unit, give the subagent:
    - The full plan file path (for overall context)
@@ -285,7 +286,7 @@ Determine how to proceed based on what was provided in `<input_document>`.
    - The plan should reference similar code - read those files first
    - Match naming conventions exactly
    - Reuse existing components where possible
-   - Follow project coding standards (see AGENTS.md; use CLAUDE.md only if the repo still keeps a compatibility shim)
+   - Follow the project's coding standards already in your context
    - When in doubt, grep for similar implementations
 
 4. **Test Continuously**
@@ -309,11 +310,19 @@ Determine how to proceed based on what was provided in `<input_document>`.
    For UI work with Figma designs:
 
    - Implement components following design specs
-   - Use ce-figma-design-sync agent iteratively to compare
+   - Read `references/agents/figma-design-sync.md` and dispatch a generic subagent seeded with that local prompt to compare implementation against the Figma design. Do not dispatch a standalone agent by type/name.
    - Fix visual differences identified
    - Repeat until implementation matches design
 
-6. **Track Progress**
+7. **Frontend Design Guidance** (if applicable)
+
+   For UI tasks without a Figma design -- where the implementation touches view, template, component, layout, or page files, creates user-visible routes, or the plan contains explicit UI/frontend/design language:
+
+   - Apply the frontend guidance embedded in this skill and the active repo instructions: preserve existing design-system conventions, use real UI controls and states, keep layouts responsive, and verify text does not overflow or overlap.
+   - When browser tooling is available, inspect the changed UI at desktop and mobile widths before final validation. If no browser access is available, do a code-level responsive/layout review and record that browser verification was unavailable.
+   - Phase 4's screenshot capture still applies when the change is user-visible.
+
+8. **Track Progress**
    - Keep the task list updated as you complete tasks
    - Note any blockers or unexpected discoveries
    - Create new tasks if scope expands

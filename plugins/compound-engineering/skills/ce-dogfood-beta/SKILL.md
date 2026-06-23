@@ -24,7 +24,7 @@ This workflow drives the browser exclusively through the `agent-browser` CLI. Do
   command -v agent-browser >/dev/null 2>&1 && echo "Ready" || echo "NOT INSTALLED"
   ```
 
-  If not installed, run the `ce-setup` skill to install dependencies, then resume. Do not continue without it.
+  If not installed, run the `ce-setup` skill to get the current install command, install `agent-browser`, then resume. Do not continue without it.
 
 ## Reusing Compound-Engineering Skills
 
@@ -33,7 +33,7 @@ This workflow drives the browser exclusively through the `agent-browser` CLI. Do
 | When | Skill | Why |
 |------|-------|-----|
 | Phase 0 isolation | `ce-worktree` | Run the dogfood in an isolated worktree so the main checkout stays clean. |
-| agent-browser missing | `ce-setup` | Installs `agent-browser` and other deps. |
+| agent-browser missing | `ce-setup` | Reports the current `agent-browser` install command. |
 | A failure's root cause is non-obvious | `ce-debug` | Systematic root-cause analysis instead of guess-and-check. |
 | Committing each fix | `ce-commit` | Consistent, well-scoped commit messages. |
 | A bug reveals a reusable lesson | `ce-compound` | Capture the learning so the team compounds knowledge. |
@@ -120,7 +120,7 @@ Map changed files to concrete routes (views -> their pages, components -> pages 
 
 ### Phase 3: Detect Port and Start the Dev Server
 
-Determine the port (priority: explicit `--port` > `AGENTS.md`/`CLAUDE.md` > `package.json` dev script > `.env*` `PORT=` > default `3000`). If a server is already listening, reuse it; otherwise start the project's dev command in the background and wait for the port to come up. This is the same mechanism `ce-test-browser` uses — follow its Phase 5–6 logic.
+Determine the port (priority: explicit `--port` > a port explicitly stated in your in-context project instructions > `package.json` dev script > `.env*` `PORT=` > default `3000`). If a server is already listening, reuse it; otherwise start the project's dev command in the background and wait for the port to come up. This is the same mechanism `ce-test-browser` uses — follow its Phase 5–6 logic.
 
 ```bash
 agent-browser open "http://localhost:${PORT}"

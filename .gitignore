@@ -5,3 +5,7 @@ node_modules/
 
 # Claude Code parallel worktrees
 .claude/worktrees/
+
+# Keep vendored upstream Pi plugin metadata visible despite global .pi ignores.
+!plugins/compound-engineering/.pi/
+!plugins/compound-engineering/.pi/**

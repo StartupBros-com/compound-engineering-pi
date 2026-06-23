@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test"
-import { promises as fs } from "fs"
 import path from "path"
 import { loadClaudePlugin } from "../src/parsers/claude"
 import { convertClaudeToOpenCode, transformSkillContentForOpenCode } from "../src/converters/claude-to-opencode"
@@ -15,7 +14,7 @@ const compoundEngineeringRoot = path.join(
 )
 
 describe("convertClaudeToOpenCode", () => {
-  test("current compound-engineering output is skills and subagents, not commands", async () => {
+  test("current compound-engineering output is skills only, not commands or standalone agents", async () => {
     const plugin = await loadClaudePlugin(compoundEngineeringRoot)
     const bundle = convertClaudeToOpenCode(plugin, {
       agentMode: "subagent",
@@ -23,14 +22,11 @@ describe("convertClaudeToOpenCode", () => {
       permissions: "none",
     })
 
-    expect(bundle.agents.length).toBeGreaterThan(0)
+    expect(bundle.agents).toHaveLength(0)
     expect(bundle.skillDirs.length).toBeGreaterThan(0)
     expect(bundle.commandFiles).toHaveLength(0)
     expect(bundle.plugins).toHaveLength(0)
     expect(bundle.config.tools).toBeUndefined()
-
-    const parsedAgents = bundle.agents.map((agent) => parseFrontmatter(agent.content))
-    expect(parsedAgents.every((agent) => agent.data.mode === "subagent")).toBe(true)
   })
 
   test("from-command mode: map allowedTools to global permission block", async () => {
@@ -41,7 +37,7 @@ describe("convertClaudeToOpenCode", () => {
       permissions: "from-commands",
     })
 
-    expect(bundle.config.command).toBeUndefined()
+    expect("command" in bundle.config).toBe(false)
     expect(bundle.config.tools).toBeUndefined()
     expect(bundle.commandFiles.find((f) => f.name === "workflows:review")).toBeDefined()
     expect(bundle.commandFiles.find((f) => f.name === "plan_review")).toBeDefined()

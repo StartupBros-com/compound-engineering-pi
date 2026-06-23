@@ -45,7 +45,7 @@ If the commit list is empty, report "No commits to describe" and stop.
 
 ```bash
 git fetch --no-tags <base-remote> "refs/pull/<number>/head"
-PR_HEAD_SHA=$(awk '/refs\/pull\/[0-9]+\/head/ {print $1; exit}' "$(git rev-parse --git-dir)/FETCH_HEAD")
+PR_HEAD_SHA=$(awk '/refs\/pull\/[0-9]+\/head/ {print $1; exit}' "$(git rev-parse --git-dir)/fetch_head")
 ```
 
 Note in the user-facing summary when the API fallback was used.

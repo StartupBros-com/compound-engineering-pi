@@ -218,7 +218,7 @@ Check whether the input is:
 
 ### 0.3 Search Prior Learnings
 
-Dispatch `ce-learnings-researcher` to search for prior optimization work on similar topics. If relevant learnings exist, incorporate them into the approach.
+Read `references/agents/learnings-researcher.md` and dispatch a generic subagent seeded with that local prompt to search for prior optimization work on similar topics. Do not dispatch a standalone agent by type/name. If relevant learnings exist, incorporate them into the approach.
 
 ### 0.4 Run Identity Detection
 
@@ -373,7 +373,7 @@ Read the code within `scope.mutable` to understand:
 - Obvious improvement opportunities
 - Constraints and dependencies between components
 
-Optionally dispatch `ce-repo-research-analyst` for deeper codebase analysis if the scope is large or unfamiliar.
+Optionally read `references/agents/repo-research-analyst.md` and dispatch a generic subagent seeded with that local prompt for deeper codebase analysis if the scope is large or unfamiliar. Do not dispatch a standalone agent by type/name.
 
 ### 2.2 Generate Hypothesis List
 
@@ -640,10 +640,10 @@ The experiment log and strategy digest remain in local `.context/...` scratch sp
 
 Present post-completion options via the platform question tool:
 
-1. **Run `/ce-code-review`** on the cumulative diff (baseline to final). Load the `ce-code-review` skill on the optimization branch (interactive or `mode:agent`). To land eligible fixes before the next option, apply the mechanical-apply bar below.
+1. **Tell the user to run `/ce-code-review` next in the current Pi session; do not launch it automatically from this workflow** on the cumulative diff (baseline to final). Load the `ce-code-review` skill on the optimization branch (interactive or `mode:agent`). To land eligible fixes before the next option, apply the mechanical-apply bar below.
 
    **Mechanical-apply bar:** apply any finding with a concrete `suggested_fix` that is a clear, reversible improvement; push back (keep, don't apply) when the reviewer is wrong, noting why. Defer anything whose right fix needs a design or product decision (architecture direction, contract shape, behavior change needing sign-off) and any finding with no concrete fix to act on — surface what was deferred. Confirm evidence still matches at `file:line` before editing. After applying, run tests (at least targeted tests for what changed; broader suite for multi-file edits). Do not commit or push from this step — leave the diff on the optimization branch for the Create PR option.
-2. **Run `/ce-compound`** to document the winning strategy as an institutional learning.
+2. **Tell the user to run `/ce-compound` next in the current Pi session; do not launch it automatically from this workflow** to document the winning strategy as an institutional learning.
 3. **Create PR** from the optimization branch to the default branch.
 4. **Continue** with more experiments: re-enter Phase 3 with the current state. State re-read first.
 5. **Done** -- leave the optimization branch for manual review.
@@ -659,3 +659,6 @@ rm -f .context/compound-engineering/ce-optimize/<spec-name>/strategy-digest.md
 
 Do NOT delete the experiment log if the user may resume locally or wants a local audit trail. If they need a durable shared artifact, summarize or export the results into a tracked path before cleanup.
 Do NOT delete experiment worktrees that are still being referenced.
+
+
+**Important:** Slash commands are Pi prompt templates, not shell executables. Keep local follow-ups session-native and user-visible; never launch nested Pi CLI processes from inside a workflow.

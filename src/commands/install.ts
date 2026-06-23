@@ -8,7 +8,7 @@ import { targets, validateScope } from "../targets"
 import { pathExists } from "../utils/files"
 import type { ClaudeToOpenCodeOptions, PermissionMode } from "../converters/claude-to-opencode"
 import { ensureCodexAgentsFile } from "../utils/codex-agents"
-import { expandHome, resolveTargetHome } from "../utils/resolve-home"
+import { expandHome, resolveCodexHome, resolveTargetHome } from "../utils/resolve-home"
 import { resolveOpenCodeWriteScope, resolveTargetOutputRoot } from "../utils/resolve-output"
 import { detectInstalledTools } from "../utils/detect-tools"
 
@@ -28,7 +28,7 @@ export default defineCommand({
     to: {
       type: "string",
       default: "opencode",
-      description: "Target format (opencode | codex | pi | gemini | kiro | all)",
+      description: "Target format (opencode | codex | pi | gemini | all)",
     },
     output: {
       type: "string",
@@ -38,7 +38,7 @@ export default defineCommand({
     codexHome: {
       type: "string",
       alias: "codex-home",
-      description: "Write Codex output to this .codex root (ex: ~/.codex)",
+      description: "Write Codex output to this Codex root (default: $CODEX_HOME or ~/.codex)",
     },
     piHome: {
       type: "string",
@@ -93,7 +93,7 @@ export default defineCommand({
     try {
       const plugin = await loadClaudePlugin(resolvedPlugin.path)
       const outputRoot = resolveOutputRoot(args.output)
-      const codexHome = resolveTargetHome(args.codexHome, path.join(os.homedir(), ".codex"))
+      const codexHome = resolveCodexHome(args.codexHome)
       const piHome = resolveTargetHome(args.piHome, path.join(os.homedir(), ".pi", "agent"))
       const hasExplicitOutput = Boolean(args.output && String(args.output).trim())
 
@@ -109,7 +109,7 @@ export default defineCommand({
         const activeTargets = detected.filter((t) => t.detected && targets[t.name]?.implemented)
 
         if (activeTargets.length === 0) {
-          console.log("No installable AI coding tools detected. Use native plugin install for Claude Code, Copilot, Droid, and Qwen.")
+        console.log("No installable AI coding tools detected. Use native plugin install for Claude Code, Copilot, Droid, OpenCode, Pi, and Qwen.")
           return
         }
 
@@ -268,19 +268,14 @@ function resolveOutputRoot(value: unknown): string {
   // Per-target defaults are applied in `resolveTargetOutputRoot` -- e.g.,
   // OpenCode falls back to `OPENCODE_CONFIG_DIR` / `~/.config/opencode`,
   // Codex falls back to `~/.codex`. Falling through to `process.cwd()` keeps
-  // workspace-rooted targets (gemini, kiro) using the user's project root
+  // workspace-rooted targets (gemini) using the user's project root
   // when neither `--output` nor a target-specific home flag was supplied.
   return process.cwd()
 }
 
 async function resolveBundledPluginPath(pluginName: string): Promise<string | null> {
-  const bundledRoot = fileURLToPath(new URL("../../plugins/", import.meta.url))
-  const pluginPath = path.join(bundledRoot, pluginName)
-  const manifestPath = path.join(pluginPath, ".claude-plugin", "plugin.json")
-  if (await pathExists(manifestPath)) {
-    return pluginPath
-  }
-  return null
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url))
+  return await resolvePluginRoot(repoRoot, pluginName)
 }
 
 async function resolveGitHubPluginPath(pluginName: string, branch?: string): Promise<ResolvedPluginPath> {
@@ -293,8 +288,8 @@ async function resolveGitHubPluginPath(pluginName: string, branch?: string): Pro
     throw error
   }
 
-  const pluginPath = path.join(tempRoot, "plugins", pluginName)
-  if (!(await pathExists(pluginPath))) {
+  const pluginPath = await resolvePluginRoot(tempRoot, pluginName)
+  if (!pluginPath) {
     await fs.rm(tempRoot, { recursive: true, force: true })
     throw new Error(`Could not find plugin ${pluginName} in ${source}.`)
   }
@@ -305,6 +300,25 @@ async function resolveGitHubPluginPath(pluginName: string, branch?: string): Pro
       await fs.rm(tempRoot, { recursive: true, force: true })
     },
   }
+}
+
+async function resolvePluginRoot(repoRoot: string, pluginName: string): Promise<string | null> {
+  const rootManifest = path.join(repoRoot, ".claude-plugin", "plugin.json")
+  if (await pathExists(rootManifest)) {
+    try {
+      const raw = await fs.readFile(rootManifest, "utf8")
+      const manifest = JSON.parse(raw) as { name?: string }
+      if (manifest.name === pluginName) return repoRoot
+    } catch {
+      // Fall through to the legacy multi-plugin layout.
+    }
+  }
+
+  const legacyPluginPath = path.join(repoRoot, "plugins", pluginName)
+  const legacyManifest = path.join(legacyPluginPath, ".claude-plugin", "plugin.json")
+  if (await pathExists(legacyManifest)) return legacyPluginPath
+
+  return null
 }
 
 function resolveGitHubSource(): string {

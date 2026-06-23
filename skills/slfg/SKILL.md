@@ -17,19 +17,18 @@ Swarm-enabled LFG. Run these steps in order, parallelizing where indicated. Do n
 
 After work completes, launch steps 4 and 5 as **parallel swarm agents** (both only need code to be written):
 
-4. `ce-code-review mode:agent plan:<plan-path-from-step-2>` — spawn as background subagent/task for read-only review
-5. `ce-test-browser` — spawn as a background subagent/task
+1. `ce-code-review mode:agent plan:<plan-path-from-step-2>` — spawn as background subagent/task for read-only review
+2. `ce-test-browser` — spawn as a background subagent/task
 
 Wait for both to complete before continuing.
 
 ## Review Fix Phase
 
-6. `ce-code-review plan:<plan-path-from-step-2>` — run sequentially after the parallel phase using the normal interactive flow so it can safely mutate the checkout, apply safe verified fixes, and emit residual todos for step 7. Do not pass deprecated autofix-mode tokens.
+1. `ce-code-review plan:<plan-path-from-step-2>` — run sequentially after the parallel phase using the normal interactive flow so it can safely mutate the checkout, apply safe verified fixes, and emit residual todos for step 7. Do not pass deprecated autofix-mode tokens.
 
 ## Finalize Phase
 
-7. `todo-resolve` — resolve findings, compound on learnings, clean up completed todos
-8. `ce-demo-reel` — record the final walkthrough and add to PR
-9. Output `<promise>DONE</promise>` when video is in PR
+1. `todo-resolve` — resolve findings, compound on learnings, clean up completed todos
+2. Output `<promise>DONE</promise>` with a concise summary of what changed, what was tested, and any PR/demo follow-up the user should do manually
 
 Start with step 1 now.

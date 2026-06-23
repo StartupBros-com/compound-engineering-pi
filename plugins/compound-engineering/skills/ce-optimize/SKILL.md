@@ -218,7 +218,7 @@ Check whether the input is:
 
 ### 0.3 Search Prior Learnings
 
-Dispatch `ce-learnings-researcher` to search for prior optimization work on similar topics. If relevant learnings exist, incorporate them into the approach.
+Read `references/agents/learnings-researcher.md` and dispatch a generic subagent seeded with that local prompt to search for prior optimization work on similar topics. Do not dispatch a standalone agent by type/name. If relevant learnings exist, incorporate them into the approach.
 
 ### 0.4 Run Identity Detection
 
@@ -373,7 +373,7 @@ Read the code within `scope.mutable` to understand:
 - Obvious improvement opportunities
 - Constraints and dependencies between components
 
-Optionally dispatch `ce-repo-research-analyst` for deeper codebase analysis if the scope is large or unfamiliar.
+Optionally read `references/agents/repo-research-analyst.md` and dispatch a generic subagent seeded with that local prompt for deeper codebase analysis if the scope is large or unfamiliar. Do not dispatch a standalone agent by type/name.
 
 ### 2.2 Generate Hypothesis List
 

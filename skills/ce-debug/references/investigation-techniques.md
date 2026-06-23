@@ -253,7 +253,7 @@ When adding `console.log`, attaching a debugger, or inserting instrumentation ca
 
 - **Timing-sensitive:** Instrumentation slowed the code enough that a race condition no longer wins. Investigate concurrency, async ordering, and shared mutable state rather than the nominal logic.
 - **Garbage-collection-sensitive:** Logging allocated memory and triggered a GC that hid the symptom. Look at memory pressure, finalizers, object lifecycle.
-- **Optimization-dependent:** Instrumentation prevented a compiler/JIT optimization that was producing wrong results. Rare but real (especially in C/C++/Rust release builds).
+- **Optimization-dependent:** Instrumentation prevented a compiler/JIT optimization that was producing wrong results. Rare but real (especially in C/C++/rust release builds).
 - **Buffering-dependent:** Log flushing changed I/O ordering. Often indicates unflushed writes elsewhere.
 - **Async-ordering-sensitive:** Log I/O introduced a microtask boundary that reorders subsequent operations. Look for code that implicitly depends on synchronous ordering.
 
@@ -288,7 +288,7 @@ agent-browser snapshot -i         # capture state after interaction
 agent-browser screenshot bug-evidence.png
 ```
 
-**Port detection:** Check project instruction files (`AGENTS.md`, `CLAUDE.md`) for port references, then `package.json` dev scripts, then `.env` files, falling back to `3000`.
+**Port detection:** If your in-context project instructions explicitly state the dev-server port, use it (don't grep instruction prose for a port — it's false-positive-prone); otherwise check `package.json` dev scripts, then `.env` files, falling back to `3000`.
 
 **Console errors:** Check browser console output for JavaScript errors, failed network requests, and CORS issues. These often reveal the root cause of UI bugs before any code tracing is needed.
 

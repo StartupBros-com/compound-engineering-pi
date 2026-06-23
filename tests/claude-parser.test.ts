@@ -33,12 +33,12 @@ async function makeMinimalPluginRoot(): Promise<string> {
 }
 
 describe("loadClaudePlugin", () => {
-  test("current compound-engineering plugin ships skills and agents but no source commands", async () => {
+  test("current compound-engineering plugin ships skills but no source commands or standalone agents", async () => {
     const plugin = await loadClaudePlugin(compoundPluginRoot)
 
     expect(plugin.commands).toHaveLength(0)
     expect(plugin.skills.length).toBeGreaterThan(0)
-    expect(plugin.agents.length).toBeGreaterThan(0)
+    expect(plugin.agents).toHaveLength(0)
   })
 
   test("loads manifest, agents, commands, skills, hooks", async () => {
@@ -146,8 +146,16 @@ describe("loadClaudePlugin", () => {
     expect(plugin.agents.map((agent) => agent.name).sort()).toEqual(["custom-agent", "default-agent"])
     expect(plugin.commands.map((command) => command.name).sort()).toEqual(["custom-command", "default-command"])
     expect(plugin.skills.map((skill) => skill.name).sort()).toEqual(["custom-skill", "default-skill"])
-    expect(plugin.hooks?.hooks.PreToolUse?.[0]?.hooks[0]?.command).toBe("echo default")
-    expect(plugin.hooks?.hooks.PostToolUse?.[0]?.hooks[0]?.command).toBe("echo custom")
+
+    const defaultHook = plugin.hooks?.hooks.PreToolUse?.[0]?.hooks[0]
+    expect(defaultHook?.type).toBe("command")
+    if (defaultHook?.type !== "command") throw new Error("expected command hook")
+    expect(defaultHook.command).toBe("echo default")
+
+    const customHook = plugin.hooks?.hooks.PostToolUse?.[0]?.hooks[0]
+    expect(customHook?.type).toBe("command")
+    if (customHook?.type !== "command") throw new Error("expected command hook")
+    expect(customHook.command).toBe("echo custom")
   })
 
   test("rejects custom component paths that escape the plugin root", async () => {
